@@ -5,6 +5,8 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       // Google OAuth avatars
       { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
+      // Supabase storage avatars
+      { protocol: 'https', hostname: '*.supabase.co' },
     ],
   },
 };

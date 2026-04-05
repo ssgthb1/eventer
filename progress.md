@@ -55,7 +55,8 @@ Full-stack party/event organizer with expense splitting, task management, RSVP, 
 - [x] 5 epic issues created (#1–#5)
 - [x] 13 child issues created (#6–#18)
 - [x] todo.md and progress.md initialized
-- [ ] **IN PROGRESS**: Issue #6 — Supabase schema + RLS
+- [x] Issue #6 — Supabase schema + RLS (merged PR #19)
+- [x] Issue #7 — Login page + OAuth callback + proxy middleware (merged PR #20)
 - [ ] Issue #7 — Login page + OAuth callback
 - [ ] Issue #8 — Middleware + role protection
 - [ ] Issue #9 — Admin pages

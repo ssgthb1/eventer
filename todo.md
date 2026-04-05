@@ -17,8 +17,8 @@
 | Issue | Title | Status |
 |-------|-------|--------|
 | [#6](https://github.com/ssgthb1/eventer/issues/6) | Supabase setup & database schema | 🔄 In Progress |
-| [#7](https://github.com/ssgthb1/eventer/issues/7) | Google OAuth login page & callback | ⏳ Pending |
-| [#8](https://github.com/ssgthb1/eventer/issues/8) | Middleware & role-based route protection | ⏳ Pending |
+| [#7](https://github.com/ssgthb1/eventer/issues/7) | Google OAuth login page & callback | ✅ Done |
+| [#8](https://github.com/ssgthb1/eventer/issues/8) | Middleware & role-based route protection | ✅ Done |
 | [#9](https://github.com/ssgthb1/eventer/issues/9) | Admin & super-admin pages | ⏳ Pending |
 | [#10](https://github.com/ssgthb1/eventer/issues/10) | App layout: AppShell, Sidebar, TopNav | ⏳ Pending |
 | [#11](https://github.com/ssgthb1/eventer/issues/11) | Event CRUD (API routes + forms) | ⏳ Pending |

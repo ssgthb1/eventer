@@ -15,15 +15,17 @@ npx vitest run src/lib/expense-calculator.test.ts  # Run single test file
 
 ## Workflow
 
-Every issue follows this cycle:
-1. Create feature branch: `git checkout -b feat/issue-{N}-short-description`
-2. Implement
-3. Spawn test agent → fix failures
-4. Spawn PR review agent (`everything-claude-code:code-reviewer`) → fix issues
-5. Rerun tests → confirm pass
-6. Ask user to approve merge
-7. `git push`, create PR, ask user to merge
-8. Update `todo.md` and `progress.md`
+Every code change MUST follow ALL steps below in order. No skipping.
+
+1. Create (or confirm) a GitHub issue exists
+2. Create feature branch: `git checkout -b feat/issue-{N}-short-description`
+3. Implement
+4. **Spawn test agent** → fix all failures before proceeding
+5. **Spawn PR review agent** (`everything-claude-code:code-reviewer`) → fix all issues it raises
+6. Rerun tests → confirm pass
+7. Ask user to review and approve
+8. Only after user approval: `git push`, create PR, ask user to merge
+9. Update `todo.md` and `progress.md`
 
 ## Architecture
 
@@ -40,7 +42,7 @@ Every issue follows this cycle:
 - `src/lib/supabase/server.ts` — server Supabase client using cookies (use in Server Components / Route Handlers)
 - `src/lib/expense-calculator.ts` — greedy minimize-transactions algorithm
 - `src/lib/notifications.ts` — Resend (email) + Twilio (SMS) helpers
-- `src/middleware.ts` — auth guard + role enforcement on every request
+- `src/proxy.ts` — auth guard + role enforcement on every request (Next.js 16 proxy convention)
 
 ### Data Model (Supabase)
 Tables: `profiles`, `events`, `event_participants`, `invitations`, `expenses`, `expense_splits`, `tasks`

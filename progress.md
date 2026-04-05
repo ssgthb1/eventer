@@ -57,6 +57,8 @@ Full-stack party/event organizer with expense splitting, task management, RSVP, 
 - [x] todo.md and progress.md initialized
 - [x] Issue #6 — Supabase schema + RLS (merged PR #19)
 - [x] Issue #7 — Login page + OAuth callback + proxy middleware (merged PR #20)
+- [x] Issue #8 — Middleware & role-based route protection (covered by proxy.ts in #7, closed)
+- [x] Issue #9 — Admin & super-admin pages with role management (merged PR #21)
 - [ ] Issue #7 — Login page + OAuth callback
 - [ ] Issue #8 — Middleware + role protection
 - [ ] Issue #9 — Admin pages

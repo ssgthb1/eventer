@@ -21,7 +21,7 @@
 | [#8](https://github.com/ssgthb1/eventer/issues/8) | Middleware & role-based route protection | ✅ Done |
 | [#9](https://github.com/ssgthb1/eventer/issues/9) | Admin & super-admin pages | ✅ Done |
 | [#10](https://github.com/ssgthb1/eventer/issues/10) | App layout: AppShell, Sidebar, TopNav | ⏳ Pending |
-| [#11](https://github.com/ssgthb1/eventer/issues/11) | Event CRUD (API routes + forms) | ⏳ Pending |
+| [#11](https://github.com/ssgthb1/eventer/issues/11) | Event CRUD (API routes + forms) | ✅ Done |
 | [#12](https://github.com/ssgthb1/eventer/issues/12) | Dashboard page | ⏳ Pending |
 | [#13](https://github.com/ssgthb1/eventer/issues/13) | Participants management & RSVP | ⏳ Pending |
 | [#14](https://github.com/ssgthb1/eventer/issues/14) | Invitations (Email via Resend + SMS via Twilio) | ⏳ Pending |

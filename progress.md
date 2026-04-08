@@ -59,6 +59,8 @@ Full-stack party/event organizer with expense splitting, task management, RSVP, 
 - [x] Issue #7 — Login page + OAuth callback + proxy middleware (merged PR #20)
 - [x] Issue #8 — Middleware & role-based route protection (covered by proxy.ts in #7, closed)
 - [x] Issue #9 — Admin & super-admin pages with role management (merged PR #21)
+- [x] Issue #10 — AppShell, Sidebar, TopNav app layout (merged PR #22)
+- [x] Issue #11 — Event CRUD: API routes, form, list/detail/edit pages (merged PR #23)
 - [ ] Issue #7 — Login page + OAuth callback
 - [ ] Issue #8 — Middleware + role protection
 - [ ] Issue #9 — Admin pages

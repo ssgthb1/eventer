@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ParticipantsList } from '@/components/ParticipantsList'
 import { AddParticipantForm } from '@/components/AddParticipantForm'
+import { InviteForm } from '@/components/InviteForm'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -47,7 +48,8 @@ export default async function ParticipantsPage({ params }: Params) {
       />
 
       {isOrganizer && (
-        <div className="mt-6">
+        <div className="mt-6 space-y-4">
+          <InviteForm eventId={eventId} />
           <AddParticipantForm eventId={eventId} />
         </div>
       )}

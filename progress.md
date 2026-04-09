@@ -61,6 +61,8 @@ Full-stack party/event organizer with expense splitting, task management, RSVP, 
 - [x] Issue #9 — Admin & super-admin pages with role management (merged PR #21)
 - [x] Issue #10 — AppShell, Sidebar, TopNav app layout (merged PR #22)
 - [x] Issue #11 — Event CRUD: API routes, form, list/detail/edit pages (merged PR #23)
+- [x] Issue #12 — Dashboard: stats, upcoming events, balance widget (merged PR #24)
+- [x] Issue #13 — Participants management & RSVP (merged PR #25)
 - [ ] Issue #7 — Login page + OAuth callback
 - [ ] Issue #8 — Middleware + role protection
 - [ ] Issue #9 — Admin pages

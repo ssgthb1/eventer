@@ -97,9 +97,12 @@ export default async function EventDetailPage({ params }: Params) {
         )}
       </div>
 
-      <div className="mt-4">
+      <div className="mt-4 flex items-center gap-4">
         <Link href="/events" className="text-sm text-indigo-600 hover:underline">
           ← Back to events
+        </Link>
+        <Link href={`/events/${id}/participants`} className="text-sm text-indigo-600 hover:underline">
+          Participants →
         </Link>
       </div>
     </div>

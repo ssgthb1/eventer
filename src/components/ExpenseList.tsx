@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { ExpenseForm, type Participant, type ExpenseData } from './ExpenseForm'
+import { SettleButton } from './SettleButton'
 
 export type Split = {
   id: string
@@ -34,6 +35,7 @@ interface ExpenseListProps {
   participants: Participant[]
   currentUserId: string
   isOrganizer: boolean
+  onMutated?: () => void
 }
 
 function participantName(p: { display_name: string | null; profiles: { full_name: string | null }[] | null } | null) {
@@ -41,7 +43,7 @@ function participantName(p: { display_name: string | null; profiles: { full_name
   return p.display_name || p.profiles?.[0]?.full_name || 'Unknown'
 }
 
-export function ExpenseList({ eventId, initialExpenses, participants, currentUserId, isOrganizer }: ExpenseListProps) {
+export function ExpenseList({ eventId, initialExpenses, participants, currentUserId, isOrganizer, onMutated }: ExpenseListProps) {
   const [expenses, setExpenses] = useState<Expense[]>(initialExpenses)
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -55,6 +57,7 @@ export function ExpenseList({ eventId, initialExpenses, participants, currentUse
       const json = await res.json()
       if (res.ok) {
         setExpenses(json.expenses ?? [])
+        onMutated?.()
       } else {
         setError(json.error ?? 'Failed to refresh expenses')
       }
@@ -167,18 +170,30 @@ export function ExpenseList({ eventId, initialExpenses, participants, currentUse
 
             {/* Splits breakdown */}
             {expense.expense_splits.length > 0 && (
-              <div className="mt-3 pt-3 border-t border-slate-100 space-y-1">
-                {expense.expense_splits.map(split => (
-                  <div key={split.id} className="flex justify-between text-xs text-slate-600">
-                    <span className={split.is_settled ? 'line-through text-slate-400' : ''}>
-                      {participantName(split.event_participants)}
-                    </span>
-                    <span className={split.is_settled ? 'text-slate-400' : ''}>
-                      {formatCurrency(split.amount_owed)}
-                      {split.is_settled && <span className="ml-1 text-green-600">✓</span>}
-                    </span>
-                  </div>
-                ))}
+              <div className="mt-3 pt-3 border-t border-slate-100 space-y-1.5">
+                {expense.expense_splits.map(split => {
+                  const canSettle = !split.is_settled && (expense.paid_by === currentUserId || isOrganizer)
+                  return (
+                    <div key={split.id} className="flex items-center justify-between text-xs text-slate-600 gap-2">
+                      <span className={split.is_settled ? 'line-through text-slate-400' : ''}>
+                        {participantName(split.event_participants)}
+                      </span>
+                      <span className="flex items-center gap-2 ml-auto shrink-0">
+                        <span className={split.is_settled ? 'text-slate-400' : ''}>
+                          {formatCurrency(split.amount_owed)}
+                          {split.is_settled && <span className="ml-1 text-green-600">✓</span>}
+                        </span>
+                        {canSettle && (
+                          <SettleButton
+                            expenseId={expense.id}
+                            participantId={split.participant_id}
+                            onSettled={refresh}
+                          />
+                        )}
+                      </span>
+                    </div>
+                  )
+                })}
               </div>
             )}
 

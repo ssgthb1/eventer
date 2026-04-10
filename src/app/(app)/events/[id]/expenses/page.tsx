@@ -2,7 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import { getSessionUser } from '@/lib/session'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ExpenseList, type Expense } from '@/components/ExpenseList'
+import { ExpensesSection } from '@/components/ExpensesSection'
+import type { Expense } from '@/components/ExpenseList'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -50,7 +51,7 @@ export default async function ExpensesPage({ params }: Params) {
         <h1 className="text-2xl font-bold text-slate-900 mt-2">Expenses</h1>
       </div>
 
-      <ExpenseList
+      <ExpensesSection
         eventId={eventId}
         initialExpenses={(expenses ?? []) as unknown as Expense[]}
         participants={participants ?? []}

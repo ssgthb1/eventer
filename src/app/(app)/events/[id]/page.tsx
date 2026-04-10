@@ -107,6 +107,9 @@ export default async function EventDetailPage({ params }: Params) {
         <Link href={`/events/${id}/expenses`} className="text-sm text-indigo-600 hover:underline">
           Expenses →
         </Link>
+        <Link href={`/events/${id}/tasks`} className="text-sm text-indigo-600 hover:underline">
+          Tasks →
+        </Link>
       </div>
     </div>
   )

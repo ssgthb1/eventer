@@ -1,7 +1,11 @@
 import { Resend } from 'resend'
 import twilio from 'twilio'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+function getResendClient() {
+  const key = process.env.RESEND_API_KEY
+  if (!key) throw new Error('RESEND_API_KEY is not configured')
+  return new Resend(key)
+}
 
 function getTwilioClient() {
   const sid = process.env.TWILIO_ACCOUNT_SID
@@ -36,6 +40,7 @@ export async function sendInviteEmail(params: InviteEmailParams): Promise<void> 
     : null
 
   // All user-supplied values are escaped before interpolation
+  const resend = getResendClient()
   await resend.emails.send({
     from: process.env.RESEND_FROM_EMAIL ?? 'noreply@eventer.app',
     to,

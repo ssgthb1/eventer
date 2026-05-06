@@ -29,3 +29,4 @@
 | [#16](https://github.com/ssgthb1/eventer/issues/16) | Expense calculator & balance/settlement UI | ✅ Done |
 | [#17](https://github.com/ssgthb1/eventer/issues/17) | Task board (kanban + assignment) | ✅ Done |
 | [#18](https://github.com/ssgthb1/eventer/issues/18) | Budget tracker & event overview | ✅ Done |
+| [#32](https://github.com/ssgthb1/eventer/issues/32) | [Mobile][Phase 0] Monorepo restructure + Expo bootstrap | ✅ Done |

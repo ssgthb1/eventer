@@ -57,3 +57,18 @@ Full-stack party/event organizer with expense splitting, task management, RSVP, 
 - [x] Issue #18 — Budget tracker widget & event overview polish (merged PR #30)
 
 ### All epics complete. App is fully built and deployed.
+
+---
+
+### 2026-05-04 — Phase 0 mobile bootstrap (Issue #32)
+
+**Monorepo restructure (npm workspaces) + Expo skeleton (merged PR #33)**
+
+- Web app moved from repo root to `apps/web/` (renamed `@eventer/web`); no behavior changes.
+- `packages/shared/` placeholder package (`@eventer/shared`) added; raw-TS source, transpiled by both Next.js (`transpilePackages`) and Metro.
+- `apps/mobile/` Expo SDK 54 skeleton (Expo Router + TS): bundle id `app.eventer.mobile`, scheme `eventer://`, slug `eventer`. `metro.config.js` extends Expo defaults and adds workspace root to `watchFolders`.
+- Root `package.json`: workspaces (`apps/*`, `packages/*`), scripts (`dev:web`, `dev:mobile`, `build`, `lint`, `test`, `type-check`), `overrides` pinning `react`/`react-dom` to `19.2.4` for cross-workspace dedupe (mobile uses `expo.install.exclude` to acknowledge the override).
+- `.gitignore` anchored `/ios/` and `/android/` to root so `expo prebuild` can land mobile native dirs in a future phase.
+- Vercel project root must be reset from repo root → `apps/web/` post-merge (manual dashboard step).
+
+**Out of scope for Phase 0** (deferred to Phase 1+): mobile Supabase wiring, auth/deep links/screens, lazy extraction of shared types and `expense-calculator` into `@eventer/shared`.

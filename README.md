@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Eventer
 
-## Getting Started
+Full-stack party/event organizer with expense splitting, task management, RSVP, and budget tracking.
 
-First, run the development server:
+## Layout
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+This is an npm-workspaces monorepo:
+
+```
+apps/
+  web/        # Next.js 16 App Router (deployed to Vercel)
+  mobile/     # Expo Router skeleton (Phase 0 — no behavior yet)
+packages/
+  shared/     # Shared TS source (extracted lazily as mobile needs it)
+supabase/     # SQL migrations
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Quick start
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm install               # Install all workspace deps from the repo root
+npm run dev               # Start the web app (localhost:3000)
+npm run dev:mobile        # Start the Expo dev server
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Other root scripts
 
-## Learn More
+```bash
+npm run build             # Build apps/web
+npm run lint              # Lint apps/web
+npm run test              # Run apps/web vitest suite
+npm run type-check        # tsc --noEmit on apps/web
+```
 
-To learn more about Next.js, take a look at the following resources:
+For Expo health check: `cd apps/mobile && npx expo-doctor`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Web environment variables
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Copy `apps/web/.env.local.example` to `apps/web/.env.local` and fill in:
 
-## Deploy on Vercel
+- `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
+- `RESEND_API_KEY`
+- `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_PHONE_NUMBER`
+- `NEXT_PUBLIC_APP_URL`
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Mobile
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Bundle id / Android package: `app.eventer.mobile`
+- URL scheme: `eventer://`
+- Slug: `eventer`
+
+## Deploy
+
+Web app deploys to Vercel. After the monorepo migration, set the Vercel project root to `apps/web/`.

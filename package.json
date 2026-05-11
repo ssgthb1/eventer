@@ -17,7 +17,11 @@
     "build": "npm --workspace apps/web run build",
     "build:web": "npm --workspace apps/web run build",
     "lint": "npm --workspace apps/web run lint",
-    "test": "npm --workspace apps/web run test",
-    "type-check": "npm --workspace apps/web run type-check"
+    "test": "npm --workspaces --if-present run test",
+    "test:web": "npm --workspace apps/web run test",
+    "test:mobile": "npm --workspace apps/mobile run test",
+    "type-check": "npm --workspaces --if-present run type-check",
+    "type-check:web": "npm --workspace apps/web run type-check",
+    "type-check:mobile": "npm --workspace apps/mobile run type-check"
   }
 }

@@ -24,8 +24,12 @@ npm run dev:web           # Start web dev server (localhost:3000)
 npm run dev:mobile        # Start Expo dev server
 npm run build             # Build apps/web
 npm run lint              # Lint apps/web
-npm run test              # Run apps/web vitest suite
-npm run type-check        # tsc --noEmit on apps/web
+npm run test              # Run vitest across all workspaces (web + mobile)
+npm run test:web          # Run only the apps/web suite
+npm run test:mobile       # Run only the apps/mobile suite
+npm run type-check        # tsc --noEmit across all workspaces
+npm run type-check:web    # tsc --noEmit on apps/web only
+npm run type-check:mobile # tsc --noEmit on apps/mobile only
 ```
 
 For workspace-scoped commands:
@@ -84,11 +88,23 @@ See `apps/web/.env.local.example`. Required: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_P
 
 ## Mobile (apps/mobile)
 
-Expo SDK 54 + Expo Router + TypeScript skeleton. Not yet wired to Supabase. Configured for the monorepo via `metro.config.js` (extends Expo's default config and adds the workspace root to `watchFolders` so Metro picks up changes in `@eventer/shared`).
+Expo SDK 54 + Expo Router + TypeScript. Configured for the monorepo via `metro.config.js` (extends Expo's default config and adds the workspace root to `watchFolders` so Metro picks up changes in `@eventer/shared`).
 
 - Bundle id (iOS) and package (Android): `app.eventer.mobile`
 - URL scheme: `eventer://`
 - Slug: `eventer`
+
+### Auth (Phase 1)
+
+- `apps/mobile/lib/supabase.ts` — Supabase client using `expo-secure-store` as the PKCE auth storage adapter.
+- `apps/mobile/lib/auth.tsx` — `AuthProvider` + `useAuth` hook. Wraps the Expo Router tree in `app/_layout.tsx`.
+- `apps/mobile/lib/auth-state.ts` — pure state machine (`deriveAuthState`, `shouldRedirectToLogin`, `shouldRedirectToHome`), unit-tested with vitest.
+- `app/login.tsx` — Sign in with Google screen. Uses `expo-auth-session` + `WebBrowser.openAuthSessionAsync` for the PKCE flow; exchanges the returned code via `supabase.auth.exchangeCodeForSession`.
+- `app/(tabs)/_layout.tsx` — auth gate; redirects to `/login` when `signedOut`.
+- Required env vars: `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY` (see `apps/mobile/.env.example`).
+- Supabase dashboard manual step: add `eventer://auth/callback` to Auth → URL Configuration → Redirect URLs.
+
+Universal Links / App Links are not configured yet — Phase 1 relies on the `eventer://` custom scheme only. App Links / Universal Links are deferred to Phase 4 (beta + store submission).
 
 ## Vercel
 

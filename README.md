@@ -28,7 +28,7 @@ npm run dev:mobile        # Start the Expo dev server
 ```bash
 npm run build             # Build apps/web
 npm run lint              # Lint apps/web
-npm run test              # Run apps/web vitest suite
+npm run test              # Run vitest across all workspaces
 npm run type-check        # tsc --noEmit on apps/web
 ```
 
@@ -48,6 +48,15 @@ Copy `apps/web/.env.local.example` to `apps/web/.env.local` and fill in:
 - Bundle id / Android package: `app.eventer.mobile`
 - URL scheme: `eventer://`
 - Slug: `eventer`
+
+Copy `apps/mobile/.env.example` to `apps/mobile/.env.local` and fill in:
+
+- `EXPO_PUBLIC_SUPABASE_URL`
+- `EXPO_PUBLIC_SUPABASE_ANON_KEY`
+
+(Same Supabase project as the web app — RLS enforces access via the anon key.)
+
+Supabase dashboard must list `eventer://auth/callback` under Auth → URL Configuration → Redirect URLs for sign-in to return to the app.
 
 ## Deploy
 

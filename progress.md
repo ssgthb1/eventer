@@ -72,3 +72,19 @@ Full-stack party/event organizer with expense splitting, task management, RSVP, 
 - Vercel project root must be reset from repo root → `apps/web/` post-merge (manual dashboard step).
 
 **Out of scope for Phase 0** (deferred to Phase 1+): mobile Supabase wiring, auth/deep links/screens, lazy extraction of shared types and `expense-calculator` into `@eventer/shared`.
+
+---
+
+### 2026-05-10 — Phase 1 mobile auth (Issue #34)
+
+**Supabase PKCE + Google OAuth in `apps/mobile` (merged PR #35)**
+
+- `apps/mobile/lib/supabase.ts` — Supabase client using `expo-secure-store` as the PKCE auth storage adapter (tokens never touch AsyncStorage). Throws on missing `EXPO_PUBLIC_SUPABASE_*`.
+- `apps/mobile/lib/auth.tsx` — `AuthProvider` + `useAuth` hook. `signInWithGoogle` uses `expo-auth-session` + `WebBrowser.openAuthSessionAsync` + `supabase.auth.exchangeCodeForSession`. `onAuthStateChange` is the single source of truth for the `loaded` flag, so a `getSession` failure can't strand the app on a spinner.
+- `apps/mobile/lib/auth-state.ts` — pure state machine (`loading | signedOut | signedIn`) extracted for vitest.
+- `app/login.tsx`, `app/(tabs)/_layout.tsx` (auth gate), `app/(tabs)/index.tsx` (placeholder home), `app/_layout.tsx` (wraps Stack in AuthProvider).
+- Root `test` and `type-check` now run across all workspaces via `--workspaces --if-present`; targeted variants exposed.
+- `.gitignore` updated to allow `.env.example` / `.env.local.example` through `.env*` (fixed a Phase 0 oversight; `apps/web/.env.local.example` is now tracked).
+- Manual step: add `eventer://auth/callback` to Supabase Auth → URL Configuration → Redirect URLs (in dashboard).
+
+**Out of scope for Phase 1** (deferred): Universal/App Links → Phase 4; data screens → Phase 2; UI kit decision → Phase 2; push tokens → Phase 3.

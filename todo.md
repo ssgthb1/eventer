@@ -30,3 +30,4 @@
 | [#17](https://github.com/ssgthb1/eventer/issues/17) | Task board (kanban + assignment) | ✅ Done |
 | [#18](https://github.com/ssgthb1/eventer/issues/18) | Budget tracker & event overview | ✅ Done |
 | [#32](https://github.com/ssgthb1/eventer/issues/32) | [Mobile][Phase 0] Monorepo restructure + Expo bootstrap | ✅ Done |
+| [#34](https://github.com/ssgthb1/eventer/issues/34) | [Mobile][Phase 1] Auth + deep links (Supabase PKCE) | ✅ Done |

@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import { Check } from 'lucide-react'
+import { Button } from '@/components/ui'
 
 interface SettleButtonProps {
   expenseId: string
@@ -39,42 +41,37 @@ export function SettleButton({ expenseId, participantId, onSettled }: SettleButt
 
   if (error) {
     return (
-      <span className="flex items-center gap-1.5 text-xs">
-        <span className="text-red-500">{error}</span>
-        <button onClick={() => setError(null)} className="text-slate-400 hover:underline">
+      <span className="flex items-center gap-1.5">
+        <span className="text-xs text-red-500">{error}</span>
+        <Button variant="ghost" size="xs" onClick={() => setError(null)}>
           Dismiss
-        </button>
+        </Button>
       </span>
     )
   }
 
   if (confirming) {
     return (
-      <span className="flex items-center gap-1.5">
-        <button
+      <span className="flex items-center gap-1">
+        <Button
+          variant="success"
+          size="xs"
+          loading={loading}
+          loadingText="Settling…"
           onClick={handleSettle}
-          disabled={loading}
-          className="text-xs text-green-600 hover:underline disabled:opacity-50"
         >
-          {loading ? 'Settling…' : 'Confirm'}
-        </button>
-        <button
-          onClick={() => setConfirming(false)}
-          disabled={loading}
-          className="text-xs text-slate-400 hover:underline"
-        >
+          Confirm
+        </Button>
+        <Button variant="ghost" size="xs" onClick={() => setConfirming(false)} disabled={loading}>
           Cancel
-        </button>
+        </Button>
       </span>
     )
   }
 
   return (
-    <button
-      onClick={() => setConfirming(true)}
-      className="text-xs text-indigo-500 hover:underline"
-    >
+    <Button variant="secondary" size="xs" leftIcon={<Check />} onClick={() => setConfirming(true)}>
       Settle
-    </button>
+    </Button>
   )
 }

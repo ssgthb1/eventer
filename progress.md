@@ -101,3 +101,35 @@ Full-stack party/event organizer with expense splitting, task management, RSVP, 
 - **Defensive Linking-based callback recovery** in `auth.tsx`: runs `exchangeCodeForSession` if the OAuth callback URL arrives as a deep link instead of via `WebBrowser.openAuthSessionAsync`'s return value. Skips exchange when the URL carries `?error=`.
 
 **Documented limitation:** OAuth does **not** complete in Expo Go. The `exp://<lan-ip>:8081/--/auth/callback?code=…` redirect causes Expo Go to reload the bundle, and `Linking.getInitialURL()` after the reload strips everything after the bundle host — there is no JS-level path to recover the code. Standalone builds use `eventer://` (the app's own scheme) and work cleanly. To smoke-test before standalone, use an EAS dev build.
+
+---
+
+### 2026-05-11 — Web UI design system + textual-link removal (Issue #38, PR forthcoming)
+
+**User complaint:** event detail page's bottom row was textual `← Back / Participants → / Expenses → / Tasks →` links. Same pattern repeated across most screens. Modernization Phase A + B.
+
+**Phase A — primitives under `apps/web/src/components/ui/`:**
+- `Button` (variants: `primary`, `secondary`, `ghost`, `danger`, `dangerOutline`, `dangerGhost`, `success`; sizes `xs`/`sm`/`md`/`lg`; `leftIcon`/`rightIcon`/`loading`/`loadingText`/`fullWidth`).
+- `LinkButton` — same styles as `Button`, renders `next/link`. Shared `buttonStyles` cva.
+- `IconButton` — square icon-only with required `aria-label`. Variants `primary`/`secondary`/`ghost`/`danger`.
+- `Badge` — pill variants with optional status `withDot`.
+- `BackButton` — pre-styled `LinkButton` with `ArrowLeft` icon.
+- `EmptyState` — icon + title + description + action slot, replaces the bespoke "No X yet" cards.
+- `Card` — shared white/slate-200/rounded-xl shell (introduced; gradual adoption deferred).
+- `globals.css` body font switched from Arial → Geist (the variable was loaded by Next/font but never applied). Added `cv11`/`ss01` features for Geist disambiguation glyphs.
+
+**Phase B — applied across 13 files:**
+- Event detail (`/events/[id]`): the four textual nav links became `<LinkButton>` with icons (`Users`, `DollarSign`, `CheckSquare`, `ArrowLeft`-Back). Status pill → `<Badge withDot>`. Edit link → `<LinkButton>` with `Pencil`. Tasks widget "View all →" → `<LinkButton variant="ghost">`.
+- Sub-pages (expenses/participants/tasks): top "← {event.name}" textual link → `<BackButton>`.
+- Dashboard + events list: "+ New event" header + empty-state CTAs → real `<Button>`. Empty states now use the shared `<EmptyState>` component.
+- All form actions (`EventForm`, `ExpenseForm`, `TaskForm`, `InviteForm`, `AddParticipantForm`, `AcceptInviteButton`) migrated to `<Button>` — same look, but consistent loading/disabled handling. `Button` enforces `disabled || loading` internally so per-call-site logic simplified.
+- `TaskBoard` per-card buttons: `← →` status moves became `<IconButton aria-label>`, "Edit" / "Assign to me" / "Unassign" / "Yes" / "No" became compact ghost `<Button size="xs">` with icons. "Delete" trash → `<IconButton variant="danger" aria-label>`.
+- `ExpenseList`: "+ Add expense", per-card Edit/Delete, confirm-delete prompts → `<Button>` / `dangerGhost` Button.
+- `SettleButton` (was entirely textual `text-indigo-500 hover:underline`) → success/secondary/ghost `<Button size="xs">`.
+- `DeleteEventButton`, `ParticipantsList` remove icon → `<Button>` / `<IconButton>`.
+
+**Carve-outs:** Large clickable card tiles (event detail stat cards, events grid items, dashboard upcoming event rows) stayed as `<Link>` — they aren't textual links, they're tappable surfaces. Segmented controls (`RSVPButton`, channel toggle, split-type toggle, status toggle) stayed as ad-hoc styled buttons since they aren't single-action buttons.
+
+**Out of scope for this PR** (Phase C/D follow-ups): screen-level polish (gradients, hero cards), mobile UI redesign (no feature screens exist yet — token alignment will land with Phase 2), kanban danger-icon resting affordance, pre-existing lint errors on master (apostrophes, hooks-rules in admin/super-admin/BalanceSummary).
+
+**Verification:** type-check clean across all workspaces; web suite 35 tests pass (9 new for Button + 9 for primitives); mobile suite 19 tests pass. Code review identified one HIGH (missing `dangerGhost` variant) — fixed pre-merge.

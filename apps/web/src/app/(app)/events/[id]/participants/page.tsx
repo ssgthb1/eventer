@@ -1,10 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
 import { getSessionUser } from '@/lib/session'
 import { notFound } from 'next/navigation'
-import Link from 'next/link'
 import { ParticipantsList } from '@/components/ParticipantsList'
 import { AddParticipantForm } from '@/components/AddParticipantForm'
 import { InviteForm } from '@/components/InviteForm'
+import { BackButton } from '@/components/ui'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -30,12 +30,12 @@ export default async function ParticipantsPage({ params }: Params) {
 
   return (
     <div className="max-w-3xl">
-      <div className="mb-6">
-        <Link href={`/events/${eventId}`} className="text-sm text-indigo-600 hover:underline">
-          ← {event.name}
-        </Link>
-        <h1 className="text-2xl font-bold text-slate-900 mt-2">Participants</h1>
-        <p className="text-slate-500 text-sm mt-0.5">{participants?.length ?? 0} people</p>
+      <div className="mb-6 space-y-2">
+        <BackButton href={`/events/${eventId}`} label={event.name} />
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Participants</h1>
+          <p className="text-slate-500 text-sm mt-0.5">{participants?.length ?? 0} people</p>
+        </div>
       </div>
 
       <ParticipantsList

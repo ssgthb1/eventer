@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { Button } from '@/components/ui'
 import type { Event, EventStatus } from '@/types'
 
 type FormValues = {
@@ -211,20 +212,17 @@ export function EventForm({ event }: EventFormProps) {
 
       {/* Actions */}
       <div className="flex gap-3 pt-2">
-        <button
+        <Button
           type="submit"
-          disabled={loading}
-          className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+          size="lg"
+          loading={loading}
+          loadingText="Saving…"
         >
-          {loading ? 'Saving…' : isEdit ? 'Save changes' : 'Create event'}
-        </button>
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="px-5 py-2 border border-slate-300 hover:bg-slate-50 text-slate-700 text-sm font-medium rounded-lg transition-colors"
-        >
+          {isEdit ? 'Save changes' : 'Create event'}
+        </Button>
+        <Button type="button" variant="secondary" size="lg" onClick={() => router.back()} disabled={loading}>
           Cancel
-        </button>
+        </Button>
       </div>
     </form>
   )

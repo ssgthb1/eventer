@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import { Send } from 'lucide-react'
+import { Button } from '@/components/ui'
 
 interface InviteFormProps {
   eventId: string
@@ -78,13 +80,15 @@ export function InviteForm({ eventId }: InviteFormProps) {
           required
           className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
         />
-        <button
+        <Button
           type="submit"
-          disabled={loading || !value.trim()}
-          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+          disabled={!value.trim()}
+          loading={loading}
+          loadingText="Sending…"
+          leftIcon={<Send />}
         >
-          {loading ? 'Sending…' : 'Send'}
-        </button>
+          Send
+        </Button>
       </div>
 
       {error && <p className="text-xs text-red-500 mt-2">{error}</p>}

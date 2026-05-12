@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { getSessionUser } from '@/lib/session'
 import Link from 'next/link'
+import { ArrowRight, Calendar, Plus } from 'lucide-react'
+import { LinkButton, EmptyState } from '@/components/ui'
 
 export default async function DashboardPage() {
   const user = await getSessionUser()
@@ -51,12 +53,9 @@ export default async function DashboardPage() {
           <h1 className="text-2xl font-bold text-slate-900">Hey, {firstName} 👋</h1>
           <p className="text-slate-500 text-sm mt-0.5">Here's what's coming up.</p>
         </div>
-        <Link
-          href="/events/new"
-          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors"
-        >
-          + New event
-        </Link>
+        <LinkButton href="/events/new" variant="primary" leftIcon={<Plus />}>
+          New event
+        </LinkButton>
       </div>
 
       {/* Stats row */}
@@ -74,18 +73,22 @@ export default async function DashboardPage() {
       <section>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-base font-semibold text-slate-900">Upcoming events</h2>
-          <Link href="/events" className="text-sm text-indigo-600 hover:underline">
+          <LinkButton href="/events" variant="ghost" size="sm" rightIcon={<ArrowRight />}>
             View all
-          </Link>
+          </LinkButton>
         </div>
 
         {!upcomingEvents?.length ? (
-          <div className="bg-white border border-slate-200 rounded-xl p-8 text-center">
-            <p className="text-slate-400 text-sm mb-3">No upcoming events</p>
-            <Link href="/events/new" className="text-sm text-indigo-600 hover:underline">
-              Create one →
-            </Link>
-          </div>
+          <EmptyState
+            icon={<Calendar />}
+            title="No upcoming events"
+            description="Create your first event to start planning, splitting expenses, and tracking tasks."
+            action={
+              <LinkButton href="/events/new" variant="primary" leftIcon={<Plus />}>
+                New event
+              </LinkButton>
+            }
+          />
         ) : (
           <div className="space-y-2">
             {upcomingEvents.map((event) => (

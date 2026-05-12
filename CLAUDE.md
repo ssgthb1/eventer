@@ -96,15 +96,24 @@ Expo SDK 54 + Expo Router + TypeScript. Configured for the monorepo via `metro.c
 
 ### Auth (Phase 1)
 
-- `apps/mobile/lib/supabase.ts` — Supabase client using `expo-secure-store` as the PKCE auth storage adapter.
-- `apps/mobile/lib/auth.tsx` — `AuthProvider` + `useAuth` hook. Wraps the Expo Router tree in `app/_layout.tsx`.
+- `apps/mobile/lib/supabase.ts` — Supabase client using `expo-secure-store` as the PKCE auth storage adapter. The adapter (`LargeSecureStoreAdapter`) chunks values into 400-char pieces under `${key}__N` with a `${key}__meta` count, because the iOS Keychain caps single items at ~2048 bytes and the Supabase session JSON routinely exceeds that. Unit-tested in `lib/supabase.test.ts`.
+- `apps/mobile/lib/auth.tsx` — `AuthProvider` + `useAuth` hook. Wraps the Expo Router tree in `app/_layout.tsx`. Subscribes to `Linking` (both `getInitialURL` and `'url'` events) and runs `exchangeCodeForSession` if the URL carries a `?code=…` — defensive recovery for any path where the callback is delivered as a deep link instead of via the `WebBrowser.openAuthSessionAsync` return value.
 - `apps/mobile/lib/auth-state.ts` — pure state machine (`deriveAuthState`, `shouldRedirectToLogin`, `shouldRedirectToHome`), unit-tested with vitest.
 - `app/login.tsx` — Sign in with Google screen. Uses `expo-auth-session` + `WebBrowser.openAuthSessionAsync` for the PKCE flow; exchanges the returned code via `supabase.auth.exchangeCodeForSession`.
 - `app/(tabs)/_layout.tsx` — auth gate; redirects to `/login` when `signedOut`.
+- `apps/mobile/babel.config.js` — required for `expo-router`. Without it `process.env.EXPO_ROUTER_APP_ROOT` is never inlined and Metro errors on `require.context`. Explicitly registers `expo-router-plugin` because `babel-preset-expo` is hoisted to the workspace root but `expo-router` stays under `apps/mobile/node_modules`, so the preset's `hasModule('expo-router')` check fails.
 - Required env vars: `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY` (see `apps/mobile/.env.example`).
 - Supabase dashboard manual step: add `eventer://auth/callback` to Auth → URL Configuration → Redirect URLs.
 
+React version pin: mobile pins `react`/`react-dom` to `19.1.0` (no root `overrides`). React Native 0.81.5 is compiled against React 19.1.0 and asserts the renderer matches at runtime — newer Reacts crash the app on boot. Web pins its own `19.2.4` in `apps/web/package.json` and resolves it locally; do not add a root override that forces the mobile app off `19.1.0`. **Do not run `npx expo install` (or `expo install <pkg>`) in `apps/mobile` without `--fix-dependencies=false`** — it silently rewrites `react` and `react-dom` to Expo SDK's peer-recommended versions and undoes the pin.
+
 Universal Links / App Links are not configured yet — Phase 1 relies on the `eventer://` custom scheme only. App Links / Universal Links are deferred to Phase 4 (beta + store submission).
+
+### Mobile auth does NOT work end-to-end in Expo Go
+
+OAuth in Expo Go redirects to `exp://<lan-ip>:8081/--/auth/callback?code=…`. Expo Go interprets that scheme as "reload the project bundle," which destroys the in-flight `WebBrowser.openAuthSessionAsync` promise mid-flow, and `Linking.getInitialURL()` after the reload returns only `exp://<lan-ip>:8081` — the `/--/auth/callback?code=…` portion is stripped, so we cannot recover the code. This is an Expo Go limitation, not a bug in our code.
+
+The Phase 1 target is the standalone build, where `eventer://` is the app's own scheme: no bundle reload, `ASWebAuthenticationSession` captures the callback URL cleanly, the exchange completes, and the chunked SecureStore persists the session across launches. To smoke-test mobile auth end-to-end before standalone build, use an EAS dev build (`eas build --profile development`) — `npx expo start` against the dev build behaves like a standalone build for URL scheme handling.
 
 ## Vercel
 

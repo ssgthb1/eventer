@@ -1,10 +1,34 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import * as WebBrowser from 'expo-web-browser';
+import * as Linking from 'expo-linking';
 import { makeRedirectUri } from 'expo-auth-session';
 import type { Session } from '@supabase/supabase-js';
 
 import { supabase } from './supabase';
 import { deriveAuthState, type AuthState } from './auth-state';
+
+// Runs the PKCE exchange when the OAuth callback URL arrives via a deep link.
+// On a standalone build, `WebBrowser.openAuthSessionAsync` captures the
+// `eventer://` callback synchronously and `signInWithGoogle` exchanges the
+// code directly. On any path where the system delivers the callback as a
+// deep link instead (warm app, cold start from URL), we recover the code
+// here — the `code_verifier` is already in SecureStore from before the
+// browser was opened, so the exchange still succeeds.
+async function exchangeIfCallback(url: string | null): Promise<void> {
+  if (!url) return;
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return;
+  }
+  // OAuth error responses include `?error=...` (and optionally `?code=`);
+  // skip the exchange so we don't burn the code and mask the real failure.
+  if (parsed.searchParams.has('error')) return;
+  const code = parsed.searchParams.get('code');
+  if (!code) return;
+  await supabase.auth.exchangeCodeForSession(code);
+}
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -30,9 +54,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(newSession);
       setLoaded(true);
     });
+
+    // Cold-start: app was launched by an OAuth callback URL.
+    Linking.getInitialURL().then((url) => {
+      if (!active) return;
+      void exchangeIfCallback(url);
+    });
+    // Warm: app receives an OAuth callback URL while already running.
+    const linkingSub = Linking.addEventListener('url', ({ url }) => {
+      if (!active) return;
+      void exchangeIfCallback(url);
+    });
+
     return () => {
       active = false;
       sub.subscription.unsubscribe();
+      linkingSub.remove();
     };
   }, []);
 
@@ -63,7 +100,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!code) return { error: 'No auth code in callback' };
 
     const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-    if (exchangeError) return { error: exchangeError.message };
+    if (exchangeError) {
+      // PKCE code is single-use; a "code already used" error here means the
+      // Linking listener already ran the exchange. Treat as success.
+      if (/already.*used|invalid.*grant/i.test(exchangeError.message)) return {};
+      return { error: exchangeError.message };
+    }
     return {};
   };
 

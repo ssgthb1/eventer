@@ -13,7 +13,7 @@ export async function GET(_req: Request, { params }: Params) {
   // RLS ensures only event participants can see the list
   const { data: participants, error } = await supabase
     .from('event_participants')
-    .select('id, user_id, email, display_name, role, rsvp_status, joined_at, profiles(full_name, avatar_url)')
+    .select('id, user_id, email, phone, display_name, role, rsvp_status, joined_at, profiles(full_name, avatar_url)')
     .eq('event_id', eventId)
     .order('joined_at', { ascending: true })
 
@@ -47,17 +47,28 @@ export async function POST(request: Request, { params }: Params) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  let body: { email?: string; display_name?: string; role?: 'organizer' | 'participant' }
+  let body: {
+    email?: string
+    phone?: string
+    display_name?: string
+    role?: 'organizer' | 'participant'
+  }
   try {
     body = await request.json()
   } catch {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
   }
 
-  const { email, display_name, role = 'participant' } = body
+  const email = body.email?.trim() || null
+  const phone = body.phone?.trim() || null
+  const display_name = body.display_name?.trim() || null
+  const role = body.role ?? 'participant'
 
-  if (!email?.trim() && !display_name?.trim()) {
-    return NextResponse.json({ error: 'Email or display name is required' }, { status: 400 })
+  if (!email && !phone && !display_name) {
+    return NextResponse.json(
+      { error: 'Email, phone, or display name is required' },
+      { status: 400 },
+    )
   }
 
   if (role !== 'organizer' && role !== 'participant') {
@@ -70,27 +81,42 @@ export async function POST(request: Request, { params }: Params) {
   }
 
   // Basic email format check
-  if (email?.trim() && !email.includes('@')) {
+  if (email && !email.includes('@')) {
     return NextResponse.json({ error: 'Invalid email address' }, { status: 400 })
   }
 
-  // Add participant by email/name — user_id linking happens via invitations (#14)
+  // Phone: accept digits, +, spaces, dashes, parens; at least 7 digits total
+  if (phone) {
+    const digits = phone.replace(/\D/g, '')
+    if (digits.length < 7 || !/^[\d+()\-\s.]+$/.test(phone)) {
+      return NextResponse.json({ error: 'Invalid phone number' }, { status: 400 })
+    }
+  }
+
+  // Add placeholder participant. The handle_new_user() trigger will set
+  // user_id when the matching user later signs in via Supabase auth.
   const { data: participant, error } = await supabase
     .from('event_participants')
     .insert({
       event_id: eventId,
       user_id: null,
-      email: email?.trim() || null,
-      display_name: display_name?.trim() || null,
+      email,
+      phone,
+      display_name,
       role,
       rsvp_status: 'pending',
     })
-    .select('id, user_id, email, display_name, role, rsvp_status, joined_at')
+    .select('id, user_id, email, phone, display_name, role, rsvp_status, joined_at')
     .single()
 
   if (error) {
+    // 23505 covers unique(event_id, user_id), unique(event_id, email),
+    // and the functional unique index on normalized phone digits.
     if (error.code === '23505') {
-      return NextResponse.json({ error: 'This participant is already in the event' }, { status: 409 })
+      return NextResponse.json(
+        { error: 'A participant with that email or phone is already in this event' },
+        { status: 409 },
+      )
     }
     console.error('[POST /api/events/[id]/participants]', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

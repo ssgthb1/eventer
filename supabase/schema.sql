@@ -21,20 +21,65 @@ create table if not exists public.profiles (
   created_at timestamptz default now()
 );
 
--- Auto-create profile on new user signup
--- search_path pinned to prevent search path injection attacks
+-- Auto-create profile on new user signup, and auto-link any placeholder
+-- event_participants rows that an organizer pre-created with this user's
+-- email or phone (Phase 1.5 word-of-mouth invite flow).
+-- search_path pinned to prevent search path injection attacks.
+--
+-- Phone matching strips non-digits on both sides so a placeholder stored
+-- as "+1 (415) 555-0100" matches an auth.users.phone of "+14155550100".
+-- Email matching is case-insensitive.
+--
+-- Note: Google OAuth typically does not populate auth.users.phone — the
+-- phone branch only fires for auth methods that do (SMS OTP, etc.).
 create or replace function public.handle_new_user()
 returns trigger language plpgsql security definer
 set search_path = ''
 as $$
+declare
+  new_phone_digits text := nullif(regexp_replace(coalesce(new.phone, ''), '\D', '', 'g'), '');
 begin
-  insert into public.profiles (id, full_name, avatar_url)
+  insert into public.profiles (id, full_name, avatar_url, phone)
   values (
     new.id,
     new.raw_user_meta_data->>'full_name',
-    new.raw_user_meta_data->>'avatar_url'
+    new.raw_user_meta_data->>'avatar_url',
+    new.phone
   )
   on conflict (id) do nothing;
+
+  -- Claim placeholder participants. For each event, claim at most one
+  -- placeholder (oldest joined_at) to avoid violating unique(event_id, user_id)
+  -- if both an email-only and a phone-only placeholder happen to match.
+  update public.event_participants
+     set user_id = new.id
+   where id in (
+     select distinct on (ep.event_id) ep.id
+       from public.event_participants ep
+      where ep.user_id is null
+        and (
+          (new.email is not null and lower(ep.email) = lower(new.email))
+          or (
+            new_phone_digits is not null
+            and nullif(regexp_replace(coalesce(ep.phone, ''), '\D', '', 'g'), '') = new_phone_digits
+          )
+        )
+      order by ep.event_id, ep.joined_at asc
+   );
+
+  -- Remove leftover placeholder duplicates so the same person is not listed twice.
+  -- Safe because the UPDATE above has already set user_id on the canonical row;
+  -- this only deletes still-unclaimed duplicate placeholders.
+  delete from public.event_participants
+   where user_id is null
+     and (
+       (new.email is not null and lower(email) = lower(new.email))
+       or (
+         new_phone_digits is not null
+         and nullif(regexp_replace(coalesce(phone, ''), '\D', '', 'g'), '') = new_phone_digits
+       )
+     );
+
   return new;
 end;
 $$;
@@ -367,6 +412,14 @@ create index if not exists idx_events_created_by              on public.events(c
 create index if not exists idx_events_date                    on public.events(date);
 create index if not exists idx_ep_event_id                    on public.event_participants(event_id);
 create index if not exists idx_ep_user_id                     on public.event_participants(user_id);
+-- Functional indexes used by the handle_new_user() trigger for fast auto-link lookups.
+create index if not exists idx_ep_email_lower                 on public.event_participants(lower(email));
+create index if not exists idx_ep_phone_digits                on public.event_participants(regexp_replace(coalesce(phone, ''), '\D', '', 'g'));
+-- Prevent the same phone being added to one event twice. Functional unique index
+-- (constraints don't support expressions, so this lives at the index level).
+create unique index if not exists ux_ep_event_phone_digits
+  on public.event_participants(event_id, regexp_replace(phone, '\D', '', 'g'))
+  where phone is not null;
 create index if not exists idx_invitations_token              on public.invitations(token);
 create index if not exists idx_invitations_event_id           on public.invitations(event_id);
 create index if not exists idx_invitations_expires_at         on public.invitations(expires_at);

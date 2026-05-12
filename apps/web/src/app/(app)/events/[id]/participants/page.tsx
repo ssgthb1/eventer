@@ -6,6 +6,11 @@ import { AddParticipantForm } from '@/components/AddParticipantForm'
 import { InviteForm } from '@/components/InviteForm'
 import { BackButton } from '@/components/ui'
 
+// Phase 1.5: invitation emails / SMS are gated off by default. Set
+// INVITES_ENABLED=true in the deploy env (and configure RESEND_API_KEY +
+// TWILIO_* secrets) to re-enable the InviteForm UI without a code change.
+const invitesEnabled = process.env.INVITES_ENABLED === 'true'
+
 type Params = { params: Promise<{ id: string }> }
 
 export default async function ParticipantsPage({ params }: Params) {
@@ -17,7 +22,7 @@ export default async function ParticipantsPage({ params }: Params) {
     supabase.from('events').select('id, name, created_by').eq('id', eventId).single(),
     supabase
       .from('event_participants')
-      .select('id, user_id, email, display_name, role, rsvp_status, joined_at, profiles(full_name, avatar_url)')
+      .select('id, user_id, email, phone, display_name, role, rsvp_status, joined_at, profiles(full_name, avatar_url)')
       .eq('event_id', eventId)
       .order('joined_at', { ascending: true }),
   ])
@@ -49,7 +54,7 @@ export default async function ParticipantsPage({ params }: Params) {
 
       {isOrganizer && (
         <div className="mt-6 space-y-4">
-          <InviteForm eventId={eventId} />
+          {invitesEnabled && <InviteForm eventId={eventId} />}
           <AddParticipantForm eventId={eventId} />
         </div>
       )}

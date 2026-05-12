@@ -31,4 +31,4 @@
 | [#18](https://github.com/ssgthb1/eventer/issues/18) | Budget tracker & event overview | ✅ Done |
 | [#32](https://github.com/ssgthb1/eventer/issues/32) | [Mobile][Phase 0] Monorepo restructure + Expo bootstrap | ✅ Done |
 | [#34](https://github.com/ssgthb1/eventer/issues/34) | [Mobile][Phase 1] Auth + deep links (Supabase PKCE) | ✅ Done |
-| [#36](https://github.com/ssgthb1/eventer/issues/36) | fix: mobile boot crashes + auth session not persisting (Phase 1 stabilization) | 🚧 In review |
+| [#36](https://github.com/ssgthb1/eventer/issues/36) | fix: mobile boot crashes + auth session not persisting (Phase 1 stabilization) | ✅ Done |

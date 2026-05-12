@@ -1,8 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { getSessionUser } from '@/lib/session'
 import Link from 'next/link'
-import { ArrowRight, Calendar, Plus } from 'lucide-react'
+import { ArrowRight, CalendarDays, Calendar, Plus, TrendingDown, MapPin } from 'lucide-react'
 import { LinkButton, EmptyState } from '@/components/ui'
+import { cn, formatCurrency } from '@/lib/utils'
 
 export default async function DashboardPage() {
   const user = await getSessionUser()
@@ -45,27 +46,48 @@ export default async function DashboardPage() {
   const totalOwed = unsettledSplits?.reduce((sum, s) => sum + Number(s.amount_owed), 0) ?? 0
   const firstName = profile?.full_name?.split(' ')[0] ?? 'there'
 
+  const owesAnything = totalOwed > 0
+
   return (
     <div className="space-y-8">
-      {/* Welcome */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Hey, {firstName} 👋</h1>
-          <p className="text-slate-500 text-sm mt-0.5">Here's what's coming up.</p>
+      {/* Hero greeting card */}
+      <div className="relative overflow-hidden rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50 via-white to-white p-6 sm:p-8">
+        <div className="pointer-events-none absolute -top-16 -right-16 h-48 w-48 rounded-full bg-indigo-200/40 blur-3xl" aria-hidden="true" />
+        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
+              Hey, {firstName} <span aria-hidden="true">👋</span>
+            </h1>
+            <p className="text-slate-500 text-sm mt-1">Here&apos;s what&apos;s coming up.</p>
+          </div>
+          <LinkButton href="/events/new" variant="primary" size="lg" leftIcon={<Plus />}>
+            New event
+          </LinkButton>
         </div>
-        <LinkButton href="/events/new" variant="primary" leftIcon={<Plus />}>
-          New event
-        </LinkButton>
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-        <StatCard label="Total events" value={String(totalEvents ?? 0)} href="/events" />
-        <StatCard label="Upcoming" value={String(upcomingCount ?? 0)} href="/events" />
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <StatCard
+          label="Total events"
+          value={String(totalEvents ?? 0)}
+          icon={<CalendarDays />}
+          accent="brand"
+          href="/events"
+        />
+        <StatCard
+          label="Upcoming"
+          value={String(upcomingCount ?? 0)}
+          icon={<Calendar />}
+          accent="info"
+          href="/events"
+        />
         <StatCard
           label="You owe"
-          value={new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(totalOwed)}
-          highlight={totalOwed > 0}
+          value={formatCurrency(totalOwed)}
+          icon={<TrendingDown />}
+          accent={owesAnything ? 'warning' : 'neutral'}
+          subtitle={owesAnything ? 'Unsettled across events' : 'All settled up'}
         />
       </div>
 
@@ -95,12 +117,17 @@ export default async function DashboardPage() {
               <Link
                 key={event.id}
                 href={`/events/${event.id}`}
-                className="flex items-center justify-between bg-white border border-slate-200 rounded-xl px-5 py-4 hover:border-indigo-300 hover:shadow-sm transition-all"
+                className="group flex items-center justify-between bg-white border border-slate-200 rounded-xl px-5 py-4 hover:border-indigo-300 hover:shadow-sm transition-all"
               >
-                <div>
-                  <p className="font-medium text-slate-900">{event.name}</p>
+                <div className="min-w-0">
+                  <p className="font-medium text-slate-900 truncate group-hover:text-indigo-700 transition-colors">
+                    {event.name}
+                  </p>
                   {event.location && (
-                    <p className="text-xs text-slate-400 mt-0.5">{event.location}</p>
+                    <p className="mt-0.5 inline-flex items-center gap-1 text-xs text-slate-400">
+                      <MapPin className="h-3 w-3" />
+                      <span className="truncate">{event.location}</span>
+                    </p>
                   )}
                 </div>
                 {event.date && (
@@ -122,26 +149,57 @@ export default async function DashboardPage() {
   )
 }
 
+type StatAccent = 'brand' | 'info' | 'warning' | 'neutral'
+
+const ACCENT_STYLES: Record<StatAccent, { border: string; icon: string; value: string }> = {
+  brand:   { border: 'border-slate-200', icon: 'bg-indigo-50 text-indigo-600', value: 'text-slate-900' },
+  info:    { border: 'border-slate-200', icon: 'bg-blue-50 text-blue-600',     value: 'text-slate-900' },
+  warning: { border: 'border-amber-200', icon: 'bg-amber-50 text-amber-600',   value: 'text-amber-700' },
+  neutral: { border: 'border-slate-200', icon: 'bg-slate-100 text-slate-500',  value: 'text-slate-900' },
+}
+
 function StatCard({
   label,
   value,
+  icon,
+  accent = 'neutral',
   href,
-  highlight,
+  subtitle,
 }: {
   label: string
   value: string
+  icon: React.ReactNode
+  accent?: StatAccent
   href?: string
-  highlight?: boolean
+  subtitle?: string
 }) {
+  const a = ACCENT_STYLES[accent]
   const content = (
-    <div className={`bg-white border rounded-xl px-5 py-4 ${highlight ? 'border-red-200' : 'border-slate-200'}`}>
-      <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">{label}</p>
-      <p className={`text-2xl font-bold ${highlight ? 'text-red-600' : 'text-slate-900'}`}>{value}</p>
+    <div className={cn('bg-white border rounded-xl px-5 py-4 h-full', a.border)}>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">{label}</p>
+          <p className={cn('text-2xl font-bold', a.value)}>{value}</p>
+          {subtitle ? <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p> : null}
+        </div>
+        <span
+          aria-hidden="true"
+          className={cn('inline-flex h-9 w-9 items-center justify-center rounded-lg [&_svg]:h-4 [&_svg]:w-4', a.icon)}
+        >
+          {icon}
+        </span>
+      </div>
     </div>
   )
 
   if (href) {
-    return <Link href={href} className="block hover:shadow-sm transition-shadow">{content}</Link>
+    return (
+      <Link href={href} className="block transition-all hover:-translate-y-0.5 hover:shadow-sm">
+        {content}
+      </Link>
+    )
   }
-  return content
+  // Non-navigable: render as a plain block without the hover lift so it doesn't
+  // signal interactivity that doesn't exist. The "You owe" tile uses this path.
+  return <div>{content}</div>
 }

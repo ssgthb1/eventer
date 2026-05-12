@@ -2,10 +2,18 @@ import { createClient } from '@/lib/supabase/server'
 import { getSessionUser } from '@/lib/session'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, ArrowRight, CheckSquare, DollarSign, Pencil, Users } from 'lucide-react'
+import {
+  ArrowRight,
+  CheckSquare,
+  ChevronRight,
+  DollarSign,
+  MapPin,
+  Pencil,
+  Users,
+} from 'lucide-react'
 import { DeleteEventButton } from '@/components/DeleteEventButton'
-import { Badge, LinkButton } from '@/components/ui'
-import { formatCurrency } from '@/lib/utils'
+import { Badge, BackButton, LinkButton } from '@/components/ui'
+import { cn, formatCurrency } from '@/lib/utils'
 
 const STATUS_VARIANT = {
   draft: 'neutral',
@@ -61,6 +69,9 @@ export default async function EventDetailPage({ params }: Params) {
 
   return (
     <div className="max-w-3xl space-y-5">
+      {/* Top navigation */}
+      <BackButton href="/events" label="Back to events" />
+
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
@@ -78,6 +89,12 @@ export default async function EventDetailPage({ params }: Params) {
               {new Date(event.date).toLocaleString(undefined, { dateStyle: 'long', timeStyle: 'short' })}
             </p>
           )}
+          {event.location && (
+            <p className="mt-1 inline-flex items-center gap-1 text-slate-500 text-sm">
+              <MapPin className="h-3.5 w-3.5" />
+              {event.location}
+            </p>
+          )}
         </div>
         {canEdit && (
           <div className="flex gap-2 flex-shrink-0">
@@ -89,37 +106,29 @@ export default async function EventDetailPage({ params }: Params) {
         )}
       </div>
 
-      {/* Quick stats */}
-      <div className="grid grid-cols-3 gap-3">
-        <Link
+      {/* Quick stats — also the primary section navigation */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <StatTile
           href={`/events/${id}/participants`}
-          className="bg-white border border-slate-200 rounded-xl p-4 hover:border-indigo-300 transition-colors group"
-        >
-          <p className="text-2xl font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
-            {participantCount ?? 0}
-          </p>
-          <p className="text-xs text-slate-500 mt-0.5">Participants</p>
-        </Link>
-
-        <Link
+          label="Participants"
+          value={String(participantCount ?? 0)}
+          icon={<Users />}
+          accent="brand"
+        />
+        <StatTile
           href={`/events/${id}/expenses`}
-          className="bg-white border border-slate-200 rounded-xl p-4 hover:border-indigo-300 transition-colors group"
-        >
-          <p className="text-2xl font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
-            {formatCurrency(totalSpend)}
-          </p>
-          <p className="text-xs text-slate-500 mt-0.5">{expenseList.length} expense{expenseList.length !== 1 ? 's' : ''}</p>
-        </Link>
-
-        <Link
+          label={`${expenseList.length} expense${expenseList.length !== 1 ? 's' : ''}`}
+          value={formatCurrency(totalSpend)}
+          icon={<DollarSign />}
+          accent="success"
+        />
+        <StatTile
           href={`/events/${id}/tasks`}
-          className="bg-white border border-slate-200 rounded-xl p-4 hover:border-indigo-300 transition-colors group"
-        >
-          <p className="text-2xl font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
-            {taskCounts.done}/{totalTasks}
-          </p>
-          <p className="text-xs text-slate-500 mt-0.5">Tasks done</p>
-        </Link>
+          label="Tasks done"
+          value={`${taskCounts.done}/${totalTasks}`}
+          icon={<CheckSquare />}
+          accent="info"
+        />
       </div>
 
       {/* Budget widget */}
@@ -199,34 +208,58 @@ export default async function EventDetailPage({ params }: Params) {
           <p className="text-sm text-slate-400">No additional details.</p>
         )}
       </div>
-
-      {/* Section actions */}
-      <div className="flex flex-wrap items-center gap-2 pt-1">
-        <LinkButton
-          href={`/events/${id}/participants`}
-          variant="primary"
-          leftIcon={<Users />}
-        >
-          Participants
-        </LinkButton>
-        <LinkButton
-          href={`/events/${id}/expenses`}
-          variant="secondary"
-          leftIcon={<DollarSign />}
-        >
-          Expenses
-        </LinkButton>
-        <LinkButton
-          href={`/events/${id}/tasks`}
-          variant="secondary"
-          leftIcon={<CheckSquare />}
-        >
-          Tasks
-        </LinkButton>
-        <LinkButton href="/events" variant="ghost" leftIcon={<ArrowLeft />} className="ml-auto">
-          Back to events
-        </LinkButton>
-      </div>
     </div>
+  )
+}
+
+type StatAccent = 'brand' | 'success' | 'info'
+
+const STAT_ACCENT: Record<StatAccent, { icon: string; hoverBorder: string }> = {
+  brand:   { icon: 'bg-indigo-50 text-indigo-600', hoverBorder: 'hover:border-indigo-300' },
+  success: { icon: 'bg-green-50 text-green-600',   hoverBorder: 'hover:border-green-300' },
+  info:    { icon: 'bg-blue-50 text-blue-600',     hoverBorder: 'hover:border-blue-300' },
+}
+
+function StatTile({
+  href,
+  label,
+  value,
+  icon,
+  accent,
+}: {
+  href: string
+  label: string
+  value: string
+  icon: React.ReactNode
+  accent: StatAccent
+}) {
+  const a = STAT_ACCENT[accent]
+  return (
+    <Link
+      href={href}
+      className={cn(
+        'group flex items-center justify-between gap-3 bg-white border border-slate-200 rounded-xl p-4 transition-all hover:-translate-y-0.5 hover:shadow-sm',
+        a.hoverBorder,
+      )}
+    >
+      <div className="flex items-center gap-3 min-w-0">
+        <span
+          aria-hidden="true"
+          className={cn('inline-flex h-10 w-10 items-center justify-center rounded-lg flex-shrink-0 [&_svg]:h-5 [&_svg]:w-5', a.icon)}
+        >
+          {icon}
+        </span>
+        <div className="min-w-0">
+          <p className="text-xl font-bold text-slate-900 leading-tight truncate group-hover:text-indigo-700 transition-colors">
+            {value}
+          </p>
+          <p className="text-xs text-slate-500 truncate">{label}</p>
+        </div>
+      </div>
+      <ChevronRight
+        aria-hidden="true"
+        className="h-4 w-4 text-slate-300 flex-shrink-0 transition-transform group-hover:translate-x-0.5 group-hover:text-indigo-500"
+      />
+    </Link>
   )
 }

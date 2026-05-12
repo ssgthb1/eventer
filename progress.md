@@ -133,3 +133,32 @@ Full-stack party/event organizer with expense splitting, task management, RSVP, 
 **Out of scope for this PR** (Phase C/D follow-ups): screen-level polish (gradients, hero cards), mobile UI redesign (no feature screens exist yet — token alignment will land with Phase 2), kanban danger-icon resting affordance, pre-existing lint errors on master (apostrophes, hooks-rules in admin/super-admin/BalanceSummary).
 
 **Verification:** type-check clean across all workspaces; web suite 35 tests pass (9 new for Button + 9 for primitives); mobile suite 19 tests pass. Code review identified one HIGH (missing `dangerGhost` variant) — fixed pre-merge.
+
+---
+
+### 2026-05-11 — Web UI Phase C: hero + cards + event-detail restructure (Issue #40, PR forthcoming)
+
+**Scope:** screen-level polish on top of the Phase A+B primitive groundwork.
+
+**Dashboard (`/dashboard`)**
+- Plain greeting row → gradient hero card (indigo-50 → white) with a soft blurred indigo accent in the corner. H1 typography bumped to `text-3xl` at sm+ breakpoints. The "New event" CTA stays in the hero at `size="lg"`.
+- StatCard redesigned: now carries an icon + accent variant (`brand`/`info`/`warning`/`neutral`). "Total events" uses `CalendarDays` (brand/indigo), "Upcoming" uses `Calendar` (info/blue), "You owe" uses `TrendingDown` and shifts to `warning` (amber, not red — unsettled balances are caution not error) when > 0, with a subtitle of "Unsettled across events" / "All settled up".
+- Upcoming event rows: title now hovers indigo and gets a MapPin icon next to the location.
+- StatCards without `href` render as plain `<div>` (not `<Link>`) to avoid signaling navigation the user can't act on — addressed in code review.
+
+**Events list (`/events`)**
+- Grid card redesign: gradient date strip across the top with a stacked `MMM`/`day` chip + weekday + time, plus the status Badge. Body has a 2-line truncated name (hovers indigo), 2-line description, and MapPin/Wallet icons on metadata. Hover lift via `hover:-translate-y-0.5`. Budget now uses `formatCurrency`.
+- Cards without a date show a "No date set" affordance with a Calendar icon.
+
+**Event detail (`/events/[id]`)**
+- `BackButton` moved to the top of the page (above the H1), following the breadcrumb convention.
+- The bottom action button row (Participants/Expenses/Tasks/Back) that landed in Phase B was redundant with the stat tiles — both navigated to the same three subpages. Removed the bottom row entirely and gave the stat tiles a clearer affordance: icon + accent + chevron-right that slides on hover. Each tile carries its own accent (brand/success/info).
+- Location pulled into the page header next to the date with a MapPin icon.
+
+**Misc**
+- `IconButton` `danger` variant resting colour: `text-slate-400` → `text-red-400` (reviewer's affordance concern from Phase B fixed).
+- Events list grid cards: replaced an invalid `<dl>` (missing `<dt>`/`<dd>` semantics) with a plain `<div>` after code review flagged it.
+
+**Carve-outs (not in this PR):** mobile (no feature screens exist yet — token alignment lands with Phase 2), web login page (already has a decent branded gradient backdrop), pre-existing master lint errors.
+
+**Verification:** type-check clean; 35 web + 19 mobile tests pass; reviewer found 1 HIGH (semantic `<dl>`) and 1 MEDIUM (non-navigable "You owe" tile rendering with hover-lift) — both fixed pre-merge.

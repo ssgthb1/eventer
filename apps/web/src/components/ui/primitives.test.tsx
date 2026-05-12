@@ -102,6 +102,7 @@ describe('BackButton', () => {
 describe('IconButton styles', () => {
   it('uses a warm danger resting colour and red hover surface', () => {
     const classes = iconButtonStyles({ variant: 'danger' })
+    expect(classes).toContain('text-red-400')
     expect(classes).toContain('hover:bg-red-50')
     expect(classes).toContain('hover:text-red-600')
   })

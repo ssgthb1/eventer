@@ -145,7 +145,7 @@ export const iconButtonStyles = cva(
         primary: 'bg-indigo-600 text-white hover:bg-indigo-700 focus-visible:ring-indigo-500',
         secondary: 'bg-white border border-slate-300 text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-400 focus-visible:ring-slate-400',
         ghost: 'text-slate-500 hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-slate-400',
-        danger: 'text-slate-400 hover:bg-red-50 hover:text-red-600 focus-visible:ring-red-400',
+        danger: 'text-red-400 hover:bg-red-50 hover:text-red-600 focus-visible:ring-red-400',
       },
       size: {
         xs: 'h-6 w-6 [&_svg]:h-3.5 [&_svg]:w-3.5',

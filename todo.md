@@ -33,3 +33,4 @@
 | [#34](https://github.com/ssgthb1/eventer/issues/34) | [Mobile][Phase 1] Auth + deep links (Supabase PKCE) | ✅ Done |
 | [#36](https://github.com/ssgthb1/eventer/issues/36) | fix: mobile boot crashes + auth session not persisting (Phase 1 stabilization) | ✅ Done |
 | [#38](https://github.com/ssgthb1/eventer/issues/38) | feat(web): design system primitives + replace textual links with buttons (Phase A+B) | ✅ Done |
+| [#40](https://github.com/ssgthb1/eventer/issues/40) | feat(web): UI Phase C — dashboard hero, events list polish, event-detail restructure, kanban affordance | ✅ Done |

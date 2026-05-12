@@ -12,6 +12,7 @@ import {
   Users,
 } from 'lucide-react'
 import { DeleteEventButton } from '@/components/DeleteEventButton'
+import { ShareEventButton } from '@/components/ShareEventButton'
 import { Badge, BackButton, LinkButton } from '@/components/ui'
 import { cn, formatCurrency } from '@/lib/utils'
 
@@ -96,14 +97,17 @@ export default async function EventDetailPage({ params }: Params) {
             </p>
           )}
         </div>
-        {canEdit && (
-          <div className="flex gap-2 flex-shrink-0">
-            <LinkButton href={`/events/${id}/edit`} variant="secondary" size="sm" leftIcon={<Pencil />}>
-              Edit
-            </LinkButton>
-            {isCreator && <DeleteEventButton eventId={id} />}
-          </div>
-        )}
+        <div className="flex flex-wrap gap-2 flex-shrink-0">
+          <ShareEventButton eventId={id} />
+          {canEdit && (
+            <>
+              <LinkButton href={`/events/${id}/edit`} variant="secondary" size="sm" leftIcon={<Pencil />}>
+                Edit
+              </LinkButton>
+              {isCreator && <DeleteEventButton eventId={id} />}
+            </>
+          )}
+        </div>
       </div>
 
       {/* Quick stats — also the primary section navigation */}

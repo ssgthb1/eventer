@@ -11,6 +11,7 @@ interface Participant {
   id: string
   user_id: string | null
   email: string | null
+  phone: string | null
   display_name: string | null
   role: ParticipantRole
   rsvp_status: RsvpStatus
@@ -86,11 +87,14 @@ export function ParticipantsList({
         </div>
       )}
       {participants.map((p) => {
-        const name = p.profiles?.[0]?.full_name ?? p.display_name ?? p.email ?? 'Unknown'
+        const name = p.profiles?.[0]?.full_name ?? p.display_name ?? p.email ?? p.phone ?? 'Unknown'
         const avatar = p.profiles?.[0]?.avatar_url
         const initials = name.trim().split(' ').filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase() || '?'
         const isSelf = p.user_id === currentUserId
         const canRemove = isOrganizer || isSelf
+        const isPlaceholder = !p.user_id
+        // For placeholder participants, show the contact channel as a subtitle
+        const subtitle = isPlaceholder ? (p.email ?? p.phone ?? null) : null
 
         return (
           <div
@@ -106,19 +110,27 @@ export function ParticipantsList({
                 </div>
               )}
               <div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <p className="text-sm font-medium text-slate-900">{name}</p>
                   {p.role === 'organizer' && (
                     <span className="text-xs px-1.5 py-0.5 bg-indigo-100 text-indigo-700 rounded font-medium">
                       Organizer
                     </span>
                   )}
+                  {isPlaceholder && (
+                    <span
+                      className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 bg-amber-50 text-amber-700 rounded font-medium"
+                      title="Linked when they sign in"
+                    >
+                      Awaiting sign-in
+                    </span>
+                  )}
                   {isSelf && (
                     <span className="text-xs text-slate-400">(you)</span>
                   )}
                 </div>
-                {p.email && !p.profiles && (
-                  <p className="text-xs text-slate-400">{p.email}</p>
+                {subtitle && (
+                  <p className="text-xs text-slate-400">{subtitle}</p>
                 )}
               </div>
             </div>

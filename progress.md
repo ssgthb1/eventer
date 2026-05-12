@@ -162,3 +162,32 @@ Full-stack party/event organizer with expense splitting, task management, RSVP, 
 **Carve-outs (not in this PR):** mobile (no feature screens exist yet — token alignment lands with Phase 2), web login page (already has a decent branded gradient backdrop), pre-existing master lint errors.
 
 **Verification:** type-check clean; 35 web + 19 mobile tests pass; reviewer found 1 HIGH (semantic `<dl>`) and 1 MEDIUM (non-navigable "You owe" tile rendering with hover-lift) — both fixed pre-merge.
+
+---
+
+### 2026-05-12 — Phase 1.5: word-of-mouth invites (Issue #42, PR forthcoming)
+
+**Goal:** ship the web app to the public without Resend (email) or Twilio (SMS) configured. Organizers add participants manually; auto-link happens on first sign-in.
+
+**SQL — `supabase/migrations/001_phase_1_5_auto_link_participants.sql` (new, idempotent):**
+- Extended `handle_new_user()` trigger to also populate `profiles.phone` from `auth.users.phone`, then UPDATE placeholder `event_participants` rows whose email/phone matches the new user. Uses `DISTINCT ON (event_id)` to claim one per event (avoids violating `unique(event_id, user_id)` when both an email-only and a phone-only placeholder match). Subsequent DELETE cleans up unclaimed duplicate placeholders.
+- **Phone matching normalizes both sides via `regexp_replace(phone, '\D', '', 'g')`** so an organizer typing `"+1 (415) 555-0100"` matches Supabase's E.164 `"+14155550100"`. (Reviewer caught this — string-equality match would have failed in nearly every real-world case.)
+- Email matching is `lower(...)` on both sides.
+- Functional indexes added: `idx_ep_email_lower`, `idx_ep_phone_digits`, and a unique functional index `ux_ep_event_phone_digits (event_id, normalized_phone) where phone is not null` so the same phone can't be added twice to one event. The API's 409 handler covers this via PostgreSQL error code 23505.
+- One-time backfill at the bottom retroactively links existing placeholders to existing auth users.
+
+**Note:** Google OAuth does not typically populate `auth.users.phone`. The phone-match branch only fires for auth methods that do (SMS OTP). Email match is the path that actually fires for the current Google-only login.
+
+**Web changes:**
+- `AddParticipantForm` — adds a `phone` input (DB column already existed), help text explaining the auto-link behavior, success message.
+- `POST /api/events/[id]/participants` — accepts `phone` with simple format validation (≥ 7 digits, allowed chars `[\d+()\-\s.]`), updated 409 message to mention phone.
+- `ParticipantsList` — placeholder rows get an amber "Awaiting sign-in" badge. Email or phone shows as a subtitle on unlinked rows.
+- `participants/page.tsx` — `<InviteForm>` gated behind `process.env.INVITES_ENABLED === 'true'` (server-side check; defaults off). Re-enable without code by setting the env var + Resend/Twilio secrets in production.
+- `ShareEventButton` — new client component on event detail page header. Copies the event URL to clipboard via `navigator.clipboard` with a hidden-textarea / `execCommand` fallback for insecure contexts. Visible to everyone (not just organizers) so anyone can pass a link around. Anyone who logs in with a matching email/phone gets auto-joined via the trigger.
+- `.env.local.example` — Resend/Twilio sections now marked OPTIONAL with empty defaults. New `INVITES_ENABLED=false` documented.
+
+**Carve-outs (kept in tree for revival):** Resend/Twilio code in `lib/notifications.ts`, the `/api/invitations/*` routes, the `<InviteForm>` component. Lazy-initialized clients mean unset env vars don't crash startup. To turn it all back on later: set `RESEND_API_KEY`, `TWILIO_*`, `INVITES_ENABLED=true` in Vercel envs.
+
+**Verification:** type-check clean; 37 web + 19 mobile tests pass (2 new for `ShareEventButton`). Reviewer found 3 HIGH issues — phone normalization mismatch, missing `unique(event_id, phone)`, undocumented `INVITES_ENABLED` — all fixed pre-merge.
+
+**Manual ops step:** apply `supabase/migrations/001_phase_1_5_auto_link_participants.sql` to the production Supabase project via the SQL Editor.

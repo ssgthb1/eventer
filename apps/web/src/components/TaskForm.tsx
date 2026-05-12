@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { Button } from '@/components/ui'
 
 export type TaskParticipant = {
   id: string
@@ -158,21 +159,17 @@ export function TaskForm({ eventId, participants, task, onSuccess, onCancel }: T
       {error && <p className="text-xs text-red-500">{error}</p>}
 
       <div className="flex gap-2 pt-1">
-        <button
+        <Button
           type="submit"
-          disabled={loading}
-          className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+          loading={loading}
+          loadingText={isEdit ? 'Saving…' : 'Adding…'}
+          fullWidth
         >
-          {loading ? (isEdit ? 'Saving…' : 'Adding…') : (isEdit ? 'Save changes' : 'Add task')}
-        </button>
-        <button
-          type="button"
-          onClick={onCancel}
-          disabled={loading}
-          className="px-4 py-2 border border-slate-300 hover:bg-slate-50 text-slate-600 text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
-        >
+          {isEdit ? 'Save changes' : 'Add task'}
+        </Button>
+        <Button type="button" variant="secondary" onClick={onCancel} disabled={loading}>
           Cancel
-        </button>
+        </Button>
       </div>
     </form>
   )

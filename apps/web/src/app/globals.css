@@ -22,5 +22,7 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  /* Geist OpenType: cv11 disambiguates 1/l/I, ss01 swaps in the alternate single-storey a */
+  font-feature-settings: "cv11", "ss01";
 }

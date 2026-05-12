@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import { ArrowLeft, ArrowRight, Pencil, Plus, Trash2, UserMinus, UserPlus } from 'lucide-react'
+import { Button, IconButton } from '@/components/ui'
 import { TaskForm, type TaskParticipant, type TaskData } from './TaskForm'
 
 type Task = {
@@ -156,12 +158,9 @@ export function TaskBoard({ eventId, initialTasks, participants, currentUserId, 
       <div className="flex items-center justify-between">
         <p className="text-sm text-slate-500">{tasks.length} task{tasks.length !== 1 ? 's' : ''}</p>
         {!showForm && !editingId && (
-          <button
-            onClick={() => setShowForm(true)}
-            className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors"
-          >
-            + Add task
-          </button>
+          <Button size="sm" leftIcon={<Plus />} onClick={() => setShowForm(true)}>
+            Add task
+          </Button>
         )}
       </div>
 
@@ -236,69 +235,95 @@ export function TaskBoard({ eventId, initialTasks, participants, currentUserId, 
                     {/* Assignee */}
                     <div className="text-xs text-slate-500">
                       {isAssignedToMe ? (
-                        <span className="flex items-center justify-between">
+                        <span className="flex items-center justify-between gap-2">
                           <span className="text-indigo-600 font-medium">Assigned to you</span>
-                          <button onClick={() => unassign(task.id)} className="text-slate-400 hover:text-red-400 ml-2">
+                          <Button
+                            variant="ghost"
+                            size="xs"
+                            leftIcon={<UserMinus />}
+                            onClick={() => unassign(task.id)}
+                          >
                             Unassign
-                          </button>
+                          </Button>
                         </span>
                       ) : task.assigned_to ? (
-                        <span className="flex items-center justify-between">
+                        <span className="flex items-center justify-between gap-2">
                           <span>{assigneeName(task.assignee) ?? 'Someone'}</span>
-                          <button onClick={() => unassign(task.id)} className="text-slate-400 hover:text-red-400 ml-2">
+                          <Button
+                            variant="ghost"
+                            size="xs"
+                            leftIcon={<UserMinus />}
+                            onClick={() => unassign(task.id)}
+                          >
                             Unassign
-                          </button>
+                          </Button>
                         </span>
                       ) : (
-                        <button onClick={() => assignSelf(task.id)} className="text-indigo-500 hover:underline">
+                        <Button
+                          variant="ghost"
+                          size="xs"
+                          leftIcon={<UserPlus />}
+                          onClick={() => assignSelf(task.id)}
+                        >
                           Assign to me
-                        </button>
+                        </Button>
                       )}
                     </div>
 
                     {/* Status move + actions */}
-                    <div className="flex items-center gap-2 pt-1 border-t border-slate-100">
+                    <div className="flex items-center gap-1 pt-1 border-t border-slate-100">
                       {PREV_STATUS[task.status] && canEdit && (
-                        <button
+                        <IconButton
+                          variant="ghost"
+                          size="xs"
+                          aria-label="Move back"
                           onClick={() => moveTask(task.id, PREV_STATUS[task.status]!)}
-                          title="Move back"
-                          className="text-slate-400 hover:text-slate-600 text-xs"
                         >
-                          ←
-                        </button>
+                          <ArrowLeft />
+                        </IconButton>
                       )}
                       {NEXT_STATUS[task.status] && canEdit && (
-                        <button
+                        <IconButton
+                          variant="ghost"
+                          size="xs"
+                          aria-label="Move forward"
                           onClick={() => moveTask(task.id, NEXT_STATUS[task.status]!)}
-                          title="Move forward"
-                          className="text-slate-400 hover:text-slate-600 text-xs"
                         >
-                          →
-                        </button>
+                          <ArrowRight />
+                        </IconButton>
                       )}
 
                       {canEdit && (
-                        <button
+                        <Button
+                          variant="ghost"
+                          size="xs"
+                          leftIcon={<Pencil />}
+                          className="ml-auto"
                           onClick={() => { setEditingId(task.id); setShowForm(false) }}
-                          className="text-xs text-indigo-500 hover:underline ml-auto"
                         >
                           Edit
-                        </button>
+                        </Button>
                       )}
 
                       {canDelete && (
                         confirmDeleteId === task.id ? (
-                          <span className="flex items-center gap-1.5 text-xs">
-                            <button onClick={() => deleteTask(task.id)} className="text-red-500 hover:underline">Yes</button>
-                            <button onClick={() => setConfirmDeleteId(null)} className="text-slate-400 hover:underline">No</button>
+                          <span className="flex items-center gap-1">
+                            <Button variant="danger" size="xs" onClick={() => deleteTask(task.id)}>
+                              Yes
+                            </Button>
+                            <Button variant="ghost" size="xs" onClick={() => setConfirmDeleteId(null)}>
+                              No
+                            </Button>
                           </span>
                         ) : (
-                          <button
+                          <IconButton
+                            variant="danger"
+                            size="xs"
+                            aria-label="Delete task"
                             onClick={() => setConfirmDeleteId(task.id)}
-                            className="text-xs text-red-400 hover:underline"
                           >
-                            Delete
-                          </button>
+                            <Trash2 />
+                          </IconButton>
                         )
                       )}
                     </div>

@@ -1,9 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { getSessionUser } from '@/lib/session'
 import { notFound } from 'next/navigation'
-import Link from 'next/link'
 import { TaskBoard } from '@/components/TaskBoard'
 import type { TaskParticipant } from '@/components/TaskForm'
+import { BackButton } from '@/components/ui'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -39,11 +39,9 @@ export default async function TasksPage({ params }: Params) {
 
   return (
     <div className="max-w-5xl">
-      <div className="mb-6">
-        <Link href={`/events/${eventId}`} className="text-sm text-indigo-600 hover:underline">
-          ← {event.name}
-        </Link>
-        <h1 className="text-2xl font-bold text-slate-900 mt-2">Tasks</h1>
+      <div className="mb-6 space-y-2">
+        <BackButton href={`/events/${eventId}`} label={event.name} />
+        <h1 className="text-2xl font-bold text-slate-900">Tasks</h1>
       </div>
 
       <TaskBoard

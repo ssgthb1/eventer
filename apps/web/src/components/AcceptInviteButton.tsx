@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { Button } from '@/components/ui'
 
 interface AcceptInviteButtonProps {
   token: string
@@ -44,38 +45,49 @@ export function AcceptInviteButton({ token, eventId }: AcceptInviteButtonProps) 
       {error && (
         <p className="text-sm text-red-500 text-center">{error}</p>
       )}
-      <button
-        onClick={() => handleAction('accept')}
+      <Button
+        size="lg"
+        fullWidth
+        loading={loading === 'accept'}
+        loadingText="Accepting…"
         disabled={loading !== null}
-        className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl transition-colors disabled:opacity-50"
+        onClick={() => handleAction('accept')}
       >
-        {loading === 'accept' ? 'Accepting…' : 'Accept invitation'}
-      </button>
+        Accept invitation
+      </Button>
 
       {!confirmDecline ? (
-        <button
-          onClick={() => setConfirmDecline(true)}
+        <Button
+          variant="secondary"
+          size="lg"
+          fullWidth
           disabled={loading !== null}
-          className="w-full py-2.5 border border-slate-300 hover:bg-slate-50 text-slate-600 font-medium rounded-xl transition-colors disabled:opacity-50"
+          onClick={() => setConfirmDecline(true)}
         >
           Decline
-        </button>
+        </Button>
       ) : (
         <div className="flex gap-2">
-          <button
+          <Button
+            variant="danger"
+            size="lg"
+            className="flex-1"
+            loading={loading === 'decline'}
+            loadingText="Declining…"
+            disabled={loading !== null}
             onClick={() => handleAction('decline')}
-            disabled={loading !== null}
-            className="flex-1 py-2.5 bg-red-500 hover:bg-red-600 text-white font-medium rounded-xl transition-colors disabled:opacity-50"
           >
-            {loading === 'decline' ? 'Declining…' : 'Yes, decline'}
-          </button>
-          <button
-            onClick={() => setConfirmDecline(false)}
+            Yes, decline
+          </Button>
+          <Button
+            variant="secondary"
+            size="lg"
+            className="flex-1"
             disabled={loading !== null}
-            className="flex-1 py-2.5 border border-slate-300 hover:bg-slate-50 text-slate-600 font-medium rounded-xl transition-colors disabled:opacity-50"
+            onClick={() => setConfirmDecline(false)}
           >
             Cancel
-          </button>
+          </Button>
         </div>
       )}
     </div>

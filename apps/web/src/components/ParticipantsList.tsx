@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
+import { X } from 'lucide-react'
+import { IconButton } from '@/components/ui'
 import { RSVPButton } from './RSVPButton'
 import type { RsvpStatus, ParticipantRole } from '@/types'
 
@@ -137,23 +139,22 @@ export function ParticipantsList({
 
               {/* Remove button */}
               {canRemove && (
-                <button
-                  onClick={() => handleRemove(p.id)}
-                  disabled={removing === p.id}
+                <IconButton
+                  variant="danger"
+                  size="sm"
                   aria-label={`Remove ${name}`}
-                  className="text-slate-400 hover:text-red-500 transition-colors disabled:opacity-50"
+                  disabled={removing === p.id}
+                  onClick={() => handleRemove(p.id)}
                 >
                   {removing === p.id ? (
-                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <svg className="animate-spin" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
                     </svg>
                   ) : (
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
+                    <X />
                   )}
-                </button>
+                </IconButton>
               )}
             </div>
           </div>

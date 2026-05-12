@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { Trash2 } from 'lucide-react'
+import { Button } from '@/components/ui'
 
 export function DeleteEventButton({ eventId }: { eventId: string }) {
   const router = useRouter()
@@ -38,29 +40,25 @@ export function DeleteEventButton({ eventId }: { eventId: string }) {
     return (
       <div className="flex gap-2 items-center">
         <span className="text-xs text-slate-500">Delete?</span>
-        <button
+        <Button
+          variant="danger"
+          size="sm"
+          loading={loading}
+          loadingText="Deleting…"
           onClick={handleDelete}
-          disabled={loading}
-          className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
         >
-          {loading ? 'Deleting…' : 'Yes, delete'}
-        </button>
-        <button
-          onClick={() => setConfirming(false)}
-          className="px-3 py-1.5 border border-slate-300 hover:bg-slate-50 text-slate-700 text-sm font-medium rounded-lg transition-colors"
-        >
+          Yes, delete
+        </Button>
+        <Button variant="secondary" size="sm" onClick={() => setConfirming(false)} disabled={loading}>
           Cancel
-        </button>
+        </Button>
       </div>
     )
   }
 
   return (
-    <button
-      onClick={() => setConfirming(true)}
-      className="px-3 py-1.5 border border-red-200 hover:bg-red-50 text-red-600 text-sm font-medium rounded-lg transition-colors"
-    >
+    <Button variant="dangerOutline" size="sm" leftIcon={<Trash2 />} onClick={() => setConfirming(true)}>
       Delete
-    </button>
+    </Button>
   )
 }

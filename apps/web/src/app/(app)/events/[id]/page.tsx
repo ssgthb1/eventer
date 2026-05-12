@@ -2,14 +2,16 @@ import { createClient } from '@/lib/supabase/server'
 import { getSessionUser } from '@/lib/session'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import { ArrowLeft, ArrowRight, CheckSquare, DollarSign, Pencil, Users } from 'lucide-react'
 import { DeleteEventButton } from '@/components/DeleteEventButton'
+import { Badge, LinkButton } from '@/components/ui'
 import { formatCurrency } from '@/lib/utils'
 
-const STATUS_STYLES: Record<string, string> = {
-  draft: 'bg-slate-100 text-slate-600',
-  active: 'bg-green-100 text-green-700',
-  completed: 'bg-blue-100 text-blue-700',
-}
+const STATUS_VARIANT = {
+  draft: 'neutral',
+  active: 'success',
+  completed: 'info',
+} as const
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -64,9 +66,12 @@ export default async function EventDetailPage({ params }: Params) {
         <div>
           <div className="flex items-center gap-3 mb-1">
             <h1 className="text-2xl font-bold text-slate-900">{event.name}</h1>
-            <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium capitalize ${STATUS_STYLES[event.status] ?? 'bg-slate-100 text-slate-600'}`}>
+            <Badge
+              variant={STATUS_VARIANT[event.status as keyof typeof STATUS_VARIANT] ?? 'neutral'}
+              withDot
+            >
               {event.status}
-            </span>
+            </Badge>
           </div>
           {event.date && (
             <p className="text-slate-500 text-sm">
@@ -76,12 +81,9 @@ export default async function EventDetailPage({ params }: Params) {
         </div>
         {canEdit && (
           <div className="flex gap-2 flex-shrink-0">
-            <Link
-              href={`/events/${id}/edit`}
-              className="px-3 py-1.5 border border-slate-300 hover:bg-slate-50 text-slate-700 text-sm font-medium rounded-lg transition-colors"
-            >
+            <LinkButton href={`/events/${id}/edit`} variant="secondary" size="sm" leftIcon={<Pencil />}>
               Edit
-            </Link>
+            </LinkButton>
             {isCreator && <DeleteEventButton eventId={id} />}
           </div>
         )}
@@ -152,7 +154,9 @@ export default async function EventDetailPage({ params }: Params) {
         <div className="bg-white border border-slate-200 rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-semibold text-slate-900">Tasks</h2>
-            <Link href={`/events/${id}/tasks`} className="text-xs text-indigo-600 hover:underline">View all →</Link>
+            <LinkButton href={`/events/${id}/tasks`} variant="ghost" size="xs" rightIcon={<ArrowRight />}>
+              View all
+            </LinkButton>
           </div>
           <div className="flex gap-3 text-xs">
             <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded-full">{taskCounts.open} open</span>
@@ -196,20 +200,32 @@ export default async function EventDetailPage({ params }: Params) {
         )}
       </div>
 
-      {/* Navigation */}
-      <div className="flex items-center gap-4 flex-wrap">
-        <Link href="/events" className="text-sm text-indigo-600 hover:underline">
-          ← Back to events
-        </Link>
-        <Link href={`/events/${id}/participants`} className="text-sm text-indigo-600 hover:underline">
-          Participants →
-        </Link>
-        <Link href={`/events/${id}/expenses`} className="text-sm text-indigo-600 hover:underline">
-          Expenses →
-        </Link>
-        <Link href={`/events/${id}/tasks`} className="text-sm text-indigo-600 hover:underline">
-          Tasks →
-        </Link>
+      {/* Section actions */}
+      <div className="flex flex-wrap items-center gap-2 pt-1">
+        <LinkButton
+          href={`/events/${id}/participants`}
+          variant="primary"
+          leftIcon={<Users />}
+        >
+          Participants
+        </LinkButton>
+        <LinkButton
+          href={`/events/${id}/expenses`}
+          variant="secondary"
+          leftIcon={<DollarSign />}
+        >
+          Expenses
+        </LinkButton>
+        <LinkButton
+          href={`/events/${id}/tasks`}
+          variant="secondary"
+          leftIcon={<CheckSquare />}
+        >
+          Tasks
+        </LinkButton>
+        <LinkButton href="/events" variant="ghost" leftIcon={<ArrowLeft />} className="ml-auto">
+          Back to events
+        </LinkButton>
       </div>
     </div>
   )

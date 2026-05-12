@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { UserPlus } from 'lucide-react'
+import { Button } from '@/components/ui'
 
 interface AddParticipantFormProps {
   eventId: string
@@ -65,13 +67,15 @@ export function AddParticipantForm({ eventId }: AddParticipantFormProps) {
         />
       </div>
       {error && <p className="text-xs text-red-500 mb-3">{error}</p>}
-      <button
+      <Button
         type="submit"
-        disabled={loading || (!email.trim() && !displayName.trim())}
-        className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+        disabled={!email.trim() && !displayName.trim()}
+        loading={loading}
+        loadingText="Adding…"
+        leftIcon={<UserPlus />}
       >
-        {loading ? 'Adding…' : 'Add'}
-      </button>
+        Add
+      </Button>
     </form>
   )
 }

@@ -1,7 +1,9 @@
 'use client'
 
 import { useState } from 'react'
+import { Pencil, Plus, Trash2 } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils'
+import { Button } from '@/components/ui'
 import { ExpenseForm, type Participant, type ExpenseData } from './ExpenseForm'
 import { SettleButton } from './SettleButton'
 
@@ -97,12 +99,13 @@ export function ExpenseList({ eventId, initialExpenses, participants, currentUse
           </p>
         </div>
         {!showForm && (
-          <button
+          <Button
+            size="sm"
+            leftIcon={<Plus />}
             onClick={() => { setShowForm(true); setEditingId(null) }}
-            className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors"
           >
-            + Add expense
-          </button>
+            Add expense
+          </Button>
         )}
       </div>
 
@@ -199,34 +202,41 @@ export function ExpenseList({ eventId, initialExpenses, participants, currentUse
 
             {/* Actions */}
             {canEdit && (
-              <div className="mt-3 pt-3 border-t border-slate-100 flex gap-2">
-                <button
+              <div className="mt-3 pt-3 border-t border-slate-100 flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="xs"
+                  leftIcon={<Pencil />}
                   onClick={() => { setEditingId(expense.id); setShowForm(false) }}
-                  className="text-xs text-indigo-600 hover:underline"
                 >
                   Edit
-                </button>
+                </Button>
                 {confirmDeleteId === expense.id ? (
-                  <span className="text-xs text-slate-600 ml-auto flex items-center gap-2">
-                    Delete this expense?
-                    <button
+                  <span className="ml-auto flex items-center gap-2">
+                    <span className="text-xs text-slate-600">Delete this expense?</span>
+                    <Button
+                      variant="danger"
+                      size="xs"
+                      loading={deletingId === expense.id}
+                      loadingText="Deleting…"
                       onClick={() => handleDelete(expense.id)}
-                      disabled={deletingId === expense.id}
-                      className="text-red-500 hover:underline"
                     >
-                      {deletingId === expense.id ? 'Deleting…' : 'Yes'}
-                    </button>
-                    <button onClick={() => setConfirmDeleteId(null)} className="text-slate-400 hover:underline">
+                      Yes
+                    </Button>
+                    <Button variant="ghost" size="xs" onClick={() => setConfirmDeleteId(null)}>
                       Cancel
-                    </button>
+                    </Button>
                   </span>
                 ) : (
-                  <button
+                  <Button
+                    variant="dangerGhost"
+                    size="xs"
+                    leftIcon={<Trash2 />}
+                    className="ml-auto"
                     onClick={() => setConfirmDeleteId(expense.id)}
-                    className="text-xs text-red-400 hover:underline ml-auto"
                   >
                     Delete
-                  </button>
+                  </Button>
                 )}
               </div>
             )}

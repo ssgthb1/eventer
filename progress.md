@@ -88,3 +88,16 @@ Full-stack party/event organizer with expense splitting, task management, RSVP, 
 - Manual step: add `eventer://auth/callback` to Supabase Auth → URL Configuration → Redirect URLs (in dashboard).
 
 **Out of scope for Phase 1** (deferred): Universal/App Links → Phase 4; data screens → Phase 2; UI kit decision → Phase 2; push tokens → Phase 3.
+
+---
+
+### 2026-05-11 — Phase 1 stabilization (Issue #36)
+
+**On-device smoke testing PR #35 surfaced three independent bugs (all in this fix).**
+
+- **Mobile failed to boot — missing `apps/mobile/babel.config.js`.** Without it `babel-preset-expo` did not inline `EXPO_ROUTER_APP_ROOT` and Metro crashed on `require.context`. Added the file with `babel-preset-expo` + an explicit registration of `expo-router-plugin` (needed because the preset is hoisted to the workspace root but `expo-router` stays under `apps/mobile/node_modules`).
+- **React renderer version skew.** Phase 0 added a root `overrides` block forcing `react`/`react-dom` to `19.2.4` to silence an `expo-doctor` duplicate-React warning. RN 0.81.5 is compiled against 19.1.0 and asserts renderer version at runtime — mobile crashed on boot. Removed the override, pinned mobile to `19.1.0`, removed `expo.install.exclude`. Web keeps its own local `19.2.4`. (Never run `expo install` in `apps/mobile` without `--fix-dependencies=false` — it will rewrite the pin.)
+- **Session not persisting across cold starts.** iOS Keychain caps each item at ~2048 bytes; Supabase session JSON exceeds that, so the naive SecureStore adapter silently dropped writes. Replaced with `LargeSecureStoreAdapter` (chunks values into 400-char pieces under `${key}__N` with a `${key}__meta` count). Writes are crash-safe via a `pending` sentinel — a kill mid-write makes `getItem` return null on next read rather than torn data. Unit-tested in `lib/supabase.test.ts`.
+- **Defensive Linking-based callback recovery** in `auth.tsx`: runs `exchangeCodeForSession` if the OAuth callback URL arrives as a deep link instead of via `WebBrowser.openAuthSessionAsync`'s return value. Skips exchange when the URL carries `?error=`.
+
+**Documented limitation:** OAuth does **not** complete in Expo Go. The `exp://<lan-ip>:8081/--/auth/callback?code=…` redirect causes Expo Go to reload the bundle, and `Linking.getInitialURL()` after the reload strips everything after the bundle host — there is no JS-level path to recover the code. Standalone builds use `eventer://` (the app's own scheme) and work cleanly. To smoke-test before standalone, use an EAS dev build.

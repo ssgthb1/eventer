@@ -1,27 +1,31 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons'
-import { View, Text, StyleSheet } from 'react-native'
+import { Link, type Href } from 'expo-router'
+import { View, Text, Pressable, StyleSheet } from 'react-native'
 
 import { accents, type Accent, colors, radius, spacing, fontSize } from '@/lib/theme'
 
 /**
- * Read-only stat row: accent icon chip + value + label. Phase 2.1 keeps these
- * non-navigable — the participants/expenses/tasks sub-screens land in later
- * sub-issues, so signalling navigation here would be a dead end.
+ * Stat row: accent icon chip + value + label. When `href` is provided the
+ * tile is tappable (chevron affordance + press feedback) and navigates;
+ * without it the tile is static — used for sections whose screens don't
+ * exist yet, so we don't signal a dead-end navigation.
  */
 export function StatTile({
   icon,
   value,
   label,
   accent = 'brand',
+  href,
 }: {
   icon: keyof typeof MaterialIcons.glyphMap
   value: string
   label: string
   accent?: Accent
+  href?: Href
 }) {
   const a = accents[accent]
-  return (
-    <View style={styles.tile}>
+  const inner = (
+    <>
       <View style={[styles.iconChip, { backgroundColor: a.bg }]}>
         <MaterialIcons name={icon} size={20} color={a.fg} />
       </View>
@@ -33,7 +37,27 @@ export function StatTile({
           {label}
         </Text>
       </View>
-    </View>
+      {href != null && (
+        <MaterialIcons
+          name="chevron-right"
+          size={18}
+          color={colors.textFaint}
+          style={styles.chevron}
+        />
+      )}
+    </>
+  )
+
+  if (href == null) {
+    return <View style={styles.tile}>{inner}</View>
+  }
+
+  return (
+    <Link href={href} asChild>
+      <Pressable style={({ pressed }) => [styles.tile, pressed && styles.pressed]}>
+        {inner}
+      </Pressable>
+    </Link>
   )
 }
 
@@ -49,6 +73,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     padding: spacing.md,
   },
+  pressed: { opacity: 0.85 },
   iconChip: {
     width: 40,
     height: 40,
@@ -59,4 +84,5 @@ const styles = StyleSheet.create({
   textWrap: { flexShrink: 1 },
   value: { fontSize: fontSize.lg, fontWeight: '700', color: colors.text },
   label: { fontSize: fontSize.xs, color: colors.textMuted },
+  chevron: { marginLeft: 'auto' },
 })

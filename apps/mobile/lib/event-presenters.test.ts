@@ -1,6 +1,13 @@
 import { describe, it, expect } from 'vitest'
 
-import { statusAccent, budgetView, taskProgressPct, pluralize } from './event-presenters'
+import {
+  statusAccent,
+  budgetView,
+  taskProgressPct,
+  pluralize,
+  rsvpPresenter,
+  participantName,
+} from './event-presenters'
 
 describe('statusAccent', () => {
   it('maps known statuses', () => {
@@ -62,5 +69,46 @@ describe('pluralize', () => {
   it('plural otherwise', () => {
     expect(pluralize(0, 'expense')).toBe('0 expenses')
     expect(pluralize(3, 'task')).toBe('3 tasks')
+  })
+})
+
+describe('rsvpPresenter', () => {
+  it('maps each status to label + accent', () => {
+    expect(rsvpPresenter('yes')).toEqual({ label: 'Going', accent: 'success' })
+    expect(rsvpPresenter('maybe')).toEqual({ label: 'Maybe', accent: 'warning' })
+    expect(rsvpPresenter('no')).toEqual({ label: "Can't go", accent: 'danger' })
+    expect(rsvpPresenter('pending')).toEqual({ label: 'Pending', accent: 'neutral' })
+  })
+  it('falls back to pending for unknown values', () => {
+    expect(rsvpPresenter('garbage')).toEqual({ label: 'Pending', accent: 'neutral' })
+  })
+})
+
+describe('participantName', () => {
+  const base = { display_name: null, email: null, phone: null, profiles: null }
+
+  it('prefers linked profile full_name', () => {
+    expect(
+      participantName({ ...base, display_name: 'Org Typed', profiles: [{ full_name: 'Real Name' }] }),
+    ).toBe('Real Name')
+  })
+  it('falls back to display_name, then email, then phone', () => {
+    expect(participantName({ ...base, display_name: 'Typed Name' })).toBe('Typed Name')
+    expect(participantName({ ...base, email: 'a@b.com' })).toBe('a@b.com')
+    expect(participantName({ ...base, phone: '+14155550100' })).toBe('+14155550100')
+  })
+  it('skips empty strings and null profile name', () => {
+    expect(participantName({ ...base, profiles: [{ full_name: '' }], display_name: 'Fallback' })).toBe(
+      'Fallback',
+    )
+    expect(participantName({ ...base, profiles: [{ full_name: null }], email: 'x@y.z' })).toBe('x@y.z')
+  })
+  it('falls through an empty profiles array (unlinked participant, no FK match)', () => {
+    expect(participantName({ ...base, profiles: [], display_name: 'Invited Guest' })).toBe(
+      'Invited Guest',
+    )
+  })
+  it('returns Unknown when nothing is available', () => {
+    expect(participantName(base)).toBe('Unknown')
   })
 })

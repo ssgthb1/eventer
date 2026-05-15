@@ -190,7 +190,7 @@ Full-stack party/event organizer with expense splitting, task management, RSVP, 
 
 **Verification:** type-check clean; 37 web + 19 mobile tests pass (2 new for `ShareEventButton`). Reviewer found 3 HIGH issues — phone normalization mismatch, missing `unique(event_id, phone)`, undocumented `INVITES_ENABLED` — all fixed pre-merge.
 
-**Manual ops step:** apply `supabase/migrations/001_phase_1_5_auto_link_participants.sql` to the production Supabase project via the SQL Editor.
+**Manual ops step:** apply `supabase/migrations/001_phase_1_5_auto_link_participants.sql` to the production Supabase project via the SQL Editor. — ✅ Applied 2026-05-15.
 
 ---
 
@@ -213,3 +213,27 @@ Full-stack party/event organizer with expense splitting, task management, RSVP, 
 **Carve-outs (later #45 sub-issues):** participants/RSVP, expenses/balance/settle, task board, create/edit + add flows. Stat tiles intentionally non-navigable (sub-screens don't exist yet). Home + Events double-fetch `listEvents` on mount (no shared cache) — acceptable for this slice; revisit with a data layer when more screens land. Dark mode (web is light-only); app icons (Phase 3). RN component render tests not set up — coverage is on the pure helpers only.
 
 **Verification:** type-check clean across all 3 workspaces; 30 web + 42 mobile + 8 shared tests pass. Pre-existing master lint errors (apostrophes / hooks-rules in admin/super-admin/BalanceSummary) unchanged — no new lint introduced. Reviewer found 3 HIGH (missing `@eventer/shared` dep ×2, unguarded route param) + MEDIUM (error leakage, unbounded queries) — all fixed pre-merge.
+
+---
+
+### 2026-05-15 — Phase 2.2: Participants screen + RSVP self-action (Issue #50, sub-issue of #45)
+
+**Goal:** second Phase 2 slice — read participants + let the signed-in user set their own RSVP. Mirrors the web `ParticipantsList`/`RSVPButton` (read + RSVP self path only).
+
+**Data access (`apps/mobile/lib/participants.ts`):**
+- `listParticipants(eventId)` — joined `profiles(full_name, avatar_url)`, ordered by `joined_at`, `.limit(500)` (consistent with `events.ts`; reviewer MEDIUM). The `profiles` join is typed as an array and accessed `?.[0]?.` — deliberately mirrors the production-proven web `ParticipantsList` (PostgREST returns an array for this embed since there's no detected FK constraint).
+- `setRsvp(participantId, status)` — `status` typed `Exclude<RsvpStatus,'pending'>`; RLS permits only self-update (same guarantee the web `/rsvp` route enforces in app code). Errors logged, generic message surfaced.
+
+**Presenters (`lib/event-presenters.ts`, unit-tested):** `rsvpPresenter` (label + accent), `RSVP_CHOICES`, `participantName` (profile→display_name→email→phone→"Unknown", `||` so empty strings fall through). `theme.ts` gained a `danger` accent for the "Can't go" state.
+
+**UI:**
+- `components/rsvp-control.tsx` — segmented Going/Maybe/Can't-go. Optimistic with rollback; in-flight guard via `useRef` (not stale `pending` state) and rollback targets a `confirmedRef` (last server-confirmed value, not the possibly-optimistic prop) — both reviewer HIGH/MEDIUM fixes.
+- `components/participant-row.tsx` — avatar (expo-image) / initials fallback, name, organizer + "Awaiting sign-in" badges, "(you)"; own row shows the RSVP control, others show a status badge.
+- `app/events/[id]/participants.tsx` — FlatList + pull-to-refresh + loading/error/empty; optimistic RSVP changes patched into local list state.
+- **Route restructure:** `app/events/[id].tsx` → `app/events/[id]/index.tsx`; added `participants.tsx`. Root `_layout.tsx` no longer hard-registers the `events/[id]/*` screens — they auto-register from the filesystem and set their own header title in-component (avoids the Expo Router index-route naming pitfall; reviewer HIGH). `StatTile` gained an optional `href` — the event-detail **Participants** tile is now navigable; expenses/tasks tiles stay static (their screens are later sub-issues).
+
+**Carve-outs (later #45 sub-issues):** organizer add/remove participant, invites UI, expenses/balance/settle, task board, create/edit event. RN component render tests still not set up — coverage is on pure helpers.
+
+**Verification:** type-check clean (all 3 workspaces); 30 web + 49 mobile + 8 shared tests pass (test agent added a `participantName([] profiles)` edge case). No new lint. Reviewer found 2 HIGH (stale-closure RSVP guard, Expo Router index-route registration) + 3 MEDIUM (optimistic rollback target, unbounded `listParticipants`, `profiles` shape — last confirmed correct vs. web precedent) — all addressed pre-merge.
+
+**Phase 1.5 migration applied to production Supabase on 2026-05-15.**

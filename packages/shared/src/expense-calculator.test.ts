@@ -149,6 +149,35 @@ describe('calculateBalances', () => {
     expect(settlements).toHaveLength(0)
   })
 
+  it('display name falls back to profile full_name, then "Unknown"', () => {
+    // No display_name → use profiles[0].full_name
+    const alice = {
+      id: 'pa',
+      user_id: 'ua',
+      display_name: null,
+      profiles: [{ full_name: 'Alice Profile' }],
+    }
+    // No display_name and no profile → "Unknown"
+    const bob = {
+      id: 'pb',
+      user_id: 'ub',
+      display_name: null,
+      profiles: null,
+    }
+    const expense = makeExpense('ua', 20, [
+      { participantId: 'pa', amountOwed: 10 },
+      { participantId: 'pb', amountOwed: 10 },
+    ])
+    const { balances, settlements } = calculateBalances([expense], [alice, bob])
+
+    expect(balances.find(b => b.participantId === 'pa')!.name).toBe('Alice Profile')
+    expect(balances.find(b => b.participantId === 'pb')!.name).toBe('Unknown')
+
+    expect(settlements).toHaveLength(1)
+    expect(settlements[0].fromName).toBe('Unknown')
+    expect(settlements[0].toName).toBe('Alice Profile')
+  })
+
   it('payer without a participant record is ignored gracefully', () => {
     const alice = makeParticipant('pa', 'Alice', 'ua')
     // paidBy user 'ux' has no participant record

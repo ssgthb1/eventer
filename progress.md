@@ -191,3 +191,25 @@ Full-stack party/event organizer with expense splitting, task management, RSVP, 
 **Verification:** type-check clean; 37 web + 19 mobile tests pass (2 new for `ShareEventButton`). Reviewer found 3 HIGH issues — phone normalization mismatch, missing `unique(event_id, phone)`, undocumented `INVITES_ENABLED` — all fixed pre-merge.
 
 **Manual ops step:** apply `supabase/migrations/001_phase_1_5_auto_link_participants.sql` to the production Supabase project via the SQL Editor.
+
+---
+
+### 2026-05-15 — Phase 2.1: shared extraction + mobile Events list/detail (Issue #48, sub-issue of #45)
+
+**Goal:** first vertical slice of Phase 2 (#45 — port feature screens to Expo). Establishes the shared-logic + screen patterns every later sub-issue reuses. The app previously had only login + a placeholder home tab (Apple 4.2 auto-reject risk).
+
+**Shared package (`packages/shared/`):**
+- `src/expense-calculator.ts` — the greedy balance/settlement algorithm, moved verbatim from `apps/web`. Now the single source of truth.
+- `src/types.ts` — domain model (Event, EventParticipant, Expense, ExpenseSplit, Task, Profile + enums + enriched joins) mirroring the Supabase schema, so web and mobile type queries against one definition.
+- `src/index.ts` re-exports both. Added own vitest (`test` script + `vitest.config.ts`, node env) — the calculator test suite moved here (web suite 37→30, shared 0→8; one extra test added by the test agent covering the `displayName` fallback chain).
+- `apps/web/src/lib/expense-calculator.ts` is now a thin re-export of `@eventer/shared` (existing `@/lib/expense-calculator` imports unchanged). `@eventer/shared` declared as an explicit `*` dependency in both `apps/web` and `apps/mobile` (was relying on workspace hoisting — reviewer HIGH, fixed pre-merge).
+
+**Mobile (`apps/mobile/`):**
+- `lib/theme.ts` — light-only design tokens (indigo/slate palette mirroring web Tailwind usage; dark mode deferred since web is light-only). `lib/format.ts` (currency/date/initials, node-safe) and `lib/event-presenters.ts` (status accent, budget view, task progress, pluralize) — both pure, unit-tested (mobile suite 19→42).
+- `components/ui/` RN primitives: `Screen`, `Card`, `Badge`, `StatTile`, `LoadingState`/`ErrorState`/`EmptyState`.
+- `lib/events.ts` — Supabase data access (RLS-scoped; no web API dependency). `listEvents` narrowed to needed columns + `.limit(200)`; `getEventDetail` parallel queries with `.limit(500)` on expenses + tasks; Supabase error detail logged, generic message surfaced to UI (reviewer MEDIUM, fixed).
+- Tab restructure: **Home / Events / Profile** (deleted template `explore.tsx` + `modal.tsx`; root layout adds `events/[id]` stack route). Home = greeting hero + total/upcoming stats + CTA. Events = `FlatList` with pull-to-refresh + loading/error/empty states. Profile = identity + sign-out (moved off Home). Event detail (`events/[id]`) = header, status badge, date/location, stat tiles, budget bar, task progress, details — read-only. `useLocalSearchParams` `id` narrowed against `string[]` (reviewer HIGH, fixed).
+
+**Carve-outs (later #45 sub-issues):** participants/RSVP, expenses/balance/settle, task board, create/edit + add flows. Stat tiles intentionally non-navigable (sub-screens don't exist yet). Home + Events double-fetch `listEvents` on mount (no shared cache) — acceptable for this slice; revisit with a data layer when more screens land. Dark mode (web is light-only); app icons (Phase 3). RN component render tests not set up — coverage is on the pure helpers only.
+
+**Verification:** type-check clean across all 3 workspaces; 30 web + 42 mobile + 8 shared tests pass. Pre-existing master lint errors (apostrophes / hooks-rules in admin/super-admin/BalanceSummary) unchanged — no new lint introduced. Reviewer found 3 HIGH (missing `@eventer/shared` dep ×2, unguarded route param) + MEDIUM (error leakage, unbounded queries) — all fixed pre-merge.

@@ -19,7 +19,8 @@ export default function RootLayout() {
         <Stack>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="login" options={{ headerShown: false }} />
-          <Stack.Screen name="events/[id]" options={{ title: 'Event' }} />
+          {/* events/[id]/* auto-register from the filesystem; each screen sets
+              its own header title via an in-component <Stack.Screen>. */}
         </Stack>
         <StatusBar style="auto" />
       </ThemeProvider>

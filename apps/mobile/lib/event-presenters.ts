@@ -2,7 +2,7 @@
 // can be unit-tested without React Native. Mirrors the derivations the web
 // event-detail page does inline.
 
-import type { EventStatus } from '@eventer/shared'
+import type { EventStatus, RsvpStatus } from '@eventer/shared'
 
 import type { Accent } from './theme'
 
@@ -47,4 +47,41 @@ export function taskProgressPct(done: number, total: number): number {
 /** "1 expense" / "3 expenses" / "0 expenses". */
 export function pluralize(count: number, noun: string): string {
   return `${count} ${noun}${count === 1 ? '' : 's'}`
+}
+
+const RSVP: Record<RsvpStatus, { label: string; accent: Accent }> = {
+  yes: { label: 'Going', accent: 'success' },
+  maybe: { label: 'Maybe', accent: 'warning' },
+  no: { label: "Can't go", accent: 'danger' },
+  pending: { label: 'Pending', accent: 'neutral' },
+}
+
+export function rsvpPresenter(status: RsvpStatus | string): {
+  label: string
+  accent: Accent
+} {
+  return RSVP[status as RsvpStatus] ?? RSVP.pending
+}
+
+/** RSVP options a user can actively pick (excludes the default 'pending'). */
+export const RSVP_CHOICES: { value: Exclude<RsvpStatus, 'pending'>; label: string }[] = [
+  { value: 'yes', label: 'Going' },
+  { value: 'maybe', label: 'Maybe' },
+  { value: 'no', label: "Can't go" },
+]
+
+type NameParts = {
+  display_name: string | null
+  email: string | null
+  phone: string | null
+  profiles: { full_name: string | null }[] | null
+}
+
+/**
+ * Resolve a participant's display name with the same precedence as the web
+ * ParticipantsList: linked profile name → organizer-typed display name →
+ * email → phone → "Unknown".
+ */
+export function participantName(p: NameParts): string {
+  return p.profiles?.[0]?.full_name || p.display_name || p.email || p.phone || 'Unknown'
 }

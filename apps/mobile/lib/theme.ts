@@ -25,6 +25,7 @@ export const colors = {
   warning: '#d97706', // amber-600
   warningSoft: '#fffbeb', // amber-50
   danger: '#dc2626', // red-600
+  dangerSoft: '#fef2f2', // red-50
 
   white: '#ffffff',
 } as const
@@ -55,12 +56,13 @@ export const fontSize = {
 } as const
 
 // Accent presets used by Badge / StatTile so screens stay declarative.
-export type Accent = 'brand' | 'success' | 'info' | 'warning' | 'neutral'
+export type Accent = 'brand' | 'success' | 'info' | 'warning' | 'danger' | 'neutral'
 
 export const accents: Record<Accent, { fg: string; bg: string }> = {
   brand: { fg: colors.brandText, bg: colors.brandSoft },
   success: { fg: colors.success, bg: colors.successSoft },
   info: { fg: colors.info, bg: colors.infoSoft },
   warning: { fg: colors.warning, bg: colors.warningSoft },
+  danger: { fg: colors.danger, bg: colors.dangerSoft },
   neutral: { fg: colors.textMuted, bg: '#f1f5f9' /* slate-100 */ },
 }

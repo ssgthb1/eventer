@@ -73,13 +73,15 @@ export default function EventDetailScreen() {
           </View>
         )}
 
-        {/* Stat tiles (read-only in Phase 2.1) */}
+        {/* Participants is navigable; expenses/tasks screens land in later
+            sub-issues so those tiles stay static (no dead-end nav). */}
         <View style={styles.stats}>
           <StatTile
             icon="group"
             value={String(participantCount)}
             label="Participants"
             accent="brand"
+            href={`/events/${id}/participants`}
           />
           <StatTile
             icon="attach-money"

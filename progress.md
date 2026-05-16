@@ -237,3 +237,28 @@ Full-stack party/event organizer with expense splitting, task management, RSVP, 
 **Verification:** type-check clean (all 3 workspaces); 30 web + 49 mobile + 8 shared tests pass (test agent added a `participantName([] profiles)` edge case). No new lint. Reviewer found 2 HIGH (stale-closure RSVP guard, Expo Router index-route registration) + 3 MEDIUM (optimistic rollback target, unbounded `listParticipants`, `profiles` shape — last confirmed correct vs. web precedent) — all addressed pre-merge.
 
 **Phase 1.5 migration applied to production Supabase on 2026-05-15.**
+
+---
+
+### 2026-05-16 — Phase 2.3: Expenses list + balance summary + settle (Issue #52, sub-issue of #45)
+
+**Goal:** third Phase 2 slice — read expenses, show the balance/settlement summary, and let an authorized user settle a split. Mirrors web `ExpenseList`/`BalanceSummary`/`SettleButton` (read + settle only).
+
+**Data access (`apps/mobile/lib/expenses.ts`):**
+- `getExpensesData(eventId)` — parallel fetch of event creator, participants (for balances + organizer check), and the deeply-nested expenses select (payer + splits + split participant). The nested select string mirrors the web expenses page verbatim so `calculateBalances` from `@eventer/shared` receives the identical shape. `.limit(500)` on participants/expenses; generic error surfaced, detail logged. `payer`/`profiles` embeds are array-shaped, deliberately matching the production-proven web components (`?.[0]?.`); the `as unknown as` cast also mirrors the web page (SDK inferred type for the embed is unwieldy).
+- `settleSplit(splitId)` — conditional update (`is_settled true WHERE id AND is_settled=false`) reproducing the web `/settle` route's check-then-act race guard. Zero returned rows ⇒ already settled or RLS-denied.
+
+**Presenters (`lib/event-presenters.ts`, unit-tested):** `splitName` (display_name-first, mirrors web `ExpenseList` — intentionally different order from `participantName`), `netBalanceView` (even / +$ / -$ with the same `0.005` epsilon as web), `allDebtsSettled` (settlements==0 ∧ has-splits ∧ every split settled).
+
+**UI:**
+- `components/balance-summary.tsx` — `calculateBalances` (shared) memoized with `allDebtsSettled`; per-participant net (+green/-red/even) + settlement plan or "All debts settled!"; renders nothing with zero expenses (matches web).
+- `components/expense-card.tsx` — description, payer, date, amount, split type; per-split breakdown with strike-through + ✓ when settled, `SettleButton` when `!settled && (payer || organizer)`.
+- `components/settle-button.tsx` — two-step confirm; `useRef` double-submit guard; `onSettled()` invoked **after** the `finally` (it reloads the parent list and unmounts the row — reviewer HIGH fix).
+- `app/events/[id]/expenses.tsx` — FlatList + pull-to-refresh + loading/error/empty; BalanceSummary as list header; settle success reloads. `isOrganizer` = creator || own role organizer.
+- Event-detail **Expenses** stat tile now navigable (only the Tasks tile remains static — its screen is the next sub-issue).
+
+**Note on settle authorization:** the `es_update` RLS policy permits the expense payer or an event organizer. The event creator is always inserted as an organizer participant at creation time (`api/events/route.ts`), so creators are covered transitively — the apparent "creator not in RLS" gap raised in review is theoretical, not a live break. Production RLS schema left unchanged (out of scope for this slice).
+
+**Carve-outs (later #45 sub-issues):** add/edit/delete expense (add-flows sub-issue), task board, create/edit event. RN render tests still not set up — coverage on pure helpers.
+
+**Verification:** type-check clean (all 3 workspaces); 30 web + 59 mobile + 8 shared tests pass. No new lint. Test + code-reviewer agents run; 2 HIGH (unmounted setState ordering, RLS-creator comment accuracy) + MEDIUM (memoize allDebtsSettled, param-type undefined, cast documented) addressed pre-merge.

@@ -10,7 +10,7 @@ import { formatCurrency, formatDateTime } from '@/lib/format'
 import { colors, radius, spacing, fontSize } from '@/lib/theme'
 
 export default function EventDetailScreen() {
-  const params = useLocalSearchParams<{ id: string | string[] }>()
+  const params = useLocalSearchParams<{ id?: string | string[] }>()
   // useLocalSearchParams can yield string[] for repeated params — narrow it.
   const id = Array.isArray(params.id) ? params.id[0] : params.id
   const [detail, setDetail] = useState<EventDetail | null>(null)
@@ -73,8 +73,8 @@ export default function EventDetailScreen() {
           </View>
         )}
 
-        {/* Participants is navigable; expenses/tasks screens land in later
-            sub-issues so those tiles stay static (no dead-end nav). */}
+        {/* Participants + Expenses are navigable; the Tasks screen lands in a
+            later sub-issue so that tile stays static (no dead-end nav). */}
         <View style={styles.stats}>
           <StatTile
             icon="group"
@@ -88,6 +88,7 @@ export default function EventDetailScreen() {
             value={formatCurrency(totalSpend)}
             label={pluralize(expenseCount, 'expense')}
             accent="success"
+            href={`/events/${id}/expenses`}
           />
           <StatTile
             icon="check-box"

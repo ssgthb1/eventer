@@ -4,6 +4,7 @@
 
 import type { EventStatus, RsvpStatus } from '@eventer/shared'
 
+import { formatCurrency } from './format'
 import type { Accent } from './theme'
 
 export function statusAccent(status: EventStatus | string): Accent {
@@ -84,4 +85,47 @@ type NameParts = {
  */
 export function participantName(p: NameParts): string {
   return p.profiles?.[0]?.full_name || p.display_name || p.email || p.phone || 'Unknown'
+}
+
+/**
+ * Name precedence for an expense split's participant. Mirrors the web
+ * ExpenseList (display_name first, then linked profile) — distinct from
+ * participantName's profile-first order, kept identical on purpose.
+ */
+export function splitName(
+  p: { display_name: string | null; profiles: { full_name: string | null }[] | null } | null,
+): string {
+  if (!p) return 'Unknown'
+  return p.display_name || p.profiles?.[0]?.full_name || 'Unknown'
+}
+
+export type NetTone = 'positive' | 'negative' | 'muted'
+
+/**
+ * Per-participant net balance display. Matches web BalanceSummary:
+ * |net| < 0.005 → "even"; positive → "+$x" (others owe you); negative →
+ * "-$x" (you owe).
+ */
+export function netBalanceView(net: number): { label: string; tone: NetTone } {
+  if (Math.abs(net) < 0.005) return { label: 'even', tone: 'muted' }
+  if (net > 0) return { label: `+${formatCurrency(net)}`, tone: 'positive' }
+  return { label: `-${formatCurrency(Math.abs(net))}`, tone: 'negative' }
+}
+
+type SettleExpense = { expense_splits: { is_settled: boolean }[] }
+
+/**
+ * True when there is at least one split and every split is settled with no
+ * outstanding transfers — the "All debts settled!" state from web.
+ */
+export function allDebtsSettled(
+  expenses: SettleExpense[],
+  settlementCount: number,
+): boolean {
+  const hasAnySplit = expenses.some((e) => e.expense_splits.length > 0)
+  return (
+    settlementCount === 0 &&
+    hasAnySplit &&
+    expenses.every((e) => e.expense_splits.every((s) => s.is_settled))
+  )
 }

@@ -38,3 +38,4 @@
 | [#45](https://github.com/ssgthb1/eventer/issues/45) | [Mobile][Phase 2] Port feature screens to Expo (umbrella) | 🔄 In progress |
 | [#48](https://github.com/ssgthb1/eventer/issues/48) | [Mobile][Phase 2.1] Foundation: shared extraction + Events list/detail + tab restructure | ✅ Done |
 | [#50](https://github.com/ssgthb1/eventer/issues/50) | [Mobile][Phase 2.2] Participants screen + RSVP self-action | ✅ Done |
+| [#52](https://github.com/ssgthb1/eventer/issues/52) | [Mobile][Phase 2.3] Expenses list + balance summary + settle | ✅ Done |

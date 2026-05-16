@@ -7,6 +7,9 @@ import {
   pluralize,
   rsvpPresenter,
   participantName,
+  splitName,
+  netBalanceView,
+  allDebtsSettled,
 } from './event-presenters'
 
 describe('statusAccent', () => {
@@ -110,5 +113,57 @@ describe('participantName', () => {
   })
   it('returns Unknown when nothing is available', () => {
     expect(participantName(base)).toBe('Unknown')
+  })
+})
+
+describe('splitName', () => {
+  it('returns Unknown for null', () => {
+    expect(splitName(null)).toBe('Unknown')
+  })
+  it('prefers display_name over linked profile (web ExpenseList order)', () => {
+    expect(splitName({ display_name: 'Typed', profiles: [{ full_name: 'Profile' }] })).toBe('Typed')
+  })
+  it('falls back to profile full_name, then Unknown', () => {
+    expect(splitName({ display_name: null, profiles: [{ full_name: 'Profile' }] })).toBe('Profile')
+    expect(splitName({ display_name: null, profiles: null })).toBe('Unknown')
+    expect(splitName({ display_name: null, profiles: [] })).toBe('Unknown')
+  })
+})
+
+describe('netBalanceView', () => {
+  it('treats near-zero as even', () => {
+    expect(netBalanceView(0)).toEqual({ label: 'even', tone: 'muted' })
+    expect(netBalanceView(0.004)).toEqual({ label: 'even', tone: 'muted' })
+    expect(netBalanceView(-0.004)).toEqual({ label: 'even', tone: 'muted' })
+  })
+  it('formats a positive net as +$ (others owe you)', () => {
+    expect(netBalanceView(12.5)).toEqual({ label: '+$12.50', tone: 'positive' })
+  })
+  it('formats a negative net as -$ (you owe)', () => {
+    expect(netBalanceView(-7)).toEqual({ label: '-$7.00', tone: 'negative' })
+  })
+})
+
+describe('allDebtsSettled', () => {
+  const split = (is_settled: boolean) => ({ is_settled })
+
+  it('false when there are no splits at all', () => {
+    expect(allDebtsSettled([{ expense_splits: [] }], 0)).toBe(false)
+  })
+  it('false when settlements remain', () => {
+    expect(allDebtsSettled([{ expense_splits: [split(true)] }], 1)).toBe(false)
+  })
+  it('false when any split is unsettled', () => {
+    expect(
+      allDebtsSettled([{ expense_splits: [split(true), split(false)] }], 0),
+    ).toBe(false)
+  })
+  it('true when every split is settled and nothing is owed', () => {
+    expect(
+      allDebtsSettled(
+        [{ expense_splits: [split(true)] }, { expense_splits: [split(true), split(true)] }],
+        0,
+      ),
+    ).toBe(true)
   })
 })

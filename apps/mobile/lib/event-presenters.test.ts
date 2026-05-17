@@ -10,6 +10,12 @@ import {
   splitName,
   netBalanceView,
   allDebtsSettled,
+  taskStatusMeta,
+  nextTaskStatus,
+  prevTaskStatus,
+  dueDateView,
+  assigneeLabel,
+  TASK_COLUMNS,
 } from './event-presenters'
 
 describe('statusAccent', () => {
@@ -165,5 +171,96 @@ describe('allDebtsSettled', () => {
         0,
       ),
     ).toBe(true)
+  })
+})
+
+describe('taskStatusMeta', () => {
+  it('maps each status', () => {
+    expect(taskStatusMeta('open')).toEqual({ label: 'Open', accent: 'neutral' })
+    expect(taskStatusMeta('in_progress')).toEqual({ label: 'In progress', accent: 'warning' })
+    expect(taskStatusMeta('done')).toEqual({ label: 'Done', accent: 'success' })
+  })
+})
+
+describe('next/prevTaskStatus', () => {
+  it('walks the pipeline forward', () => {
+    expect(nextTaskStatus('open')).toBe('in_progress')
+    expect(nextTaskStatus('in_progress')).toBe('done')
+    expect(nextTaskStatus('done')).toBeNull()
+  })
+  it('walks the pipeline backward', () => {
+    expect(prevTaskStatus('done')).toBe('in_progress')
+    expect(prevTaskStatus('in_progress')).toBe('open')
+    expect(prevTaskStatus('open')).toBeNull()
+  })
+})
+
+describe('dueDateView', () => {
+  it('returns null with no due date or an unparseable one', () => {
+    expect(dueDateView(null, 'open')).toBeNull()
+    expect(dueDateView('not-a-date', 'open')).toBeNull()
+  })
+  it('formats a UTC date label', () => {
+    expect(dueDateView('2026-05-20', 'open', '2026-05-15')).toEqual({
+      label: 'Due May 20, 2026',
+      overdue: false,
+    })
+  })
+  it('flags overdue when past and not done', () => {
+    expect(dueDateView('2026-05-10', 'in_progress', '2026-05-15')).toEqual({
+      label: 'Due May 10, 2026 · Overdue',
+      overdue: true,
+    })
+  })
+  it('never overdue when the task is done', () => {
+    expect(dueDateView('2026-05-10', 'done', '2026-05-15')).toEqual({
+      label: 'Due May 10, 2026',
+      overdue: false,
+    })
+  })
+  it('not overdue on the due date itself (UTC boundary)', () => {
+    expect(dueDateView('2026-05-15', 'open', '2026-05-15')?.overdue).toBe(false)
+  })
+  it('formats at the UTC year/day boundary (no local-timezone off-by-one)', () => {
+    // Jan 1 would render as "Dec 31, <prev year>" if formatted in any
+    // negative-UTC-offset local zone without the timeZone:'UTC' guard.
+    expect(dueDateView('2026-01-01', 'open', '2025-12-31')).toEqual({
+      label: 'Due Jan 1, 2026',
+      overdue: false,
+    })
+    // Dec 31 must not bleed into the next year either.
+    expect(dueDateView('2025-12-31', 'open', '2025-12-30')).toEqual({
+      label: 'Due Dec 31, 2025',
+      overdue: false,
+    })
+  })
+  it('uses the current UTC date when today is not injected', () => {
+    const todayUtc = new Date().toISOString().slice(0, 10)
+    // A far-future due date can never be overdue against real "now".
+    expect(dueDateView('2999-01-01', 'open')?.overdue).toBe(false)
+    // A long-past due date is always overdue against real "now".
+    expect(dueDateView('2000-01-01', 'open')?.overdue).toBe(true)
+    // Today's UTC date itself is the boundary: not overdue.
+    expect(dueDateView(todayUtc, 'open')?.overdue).toBe(false)
+  })
+})
+
+describe('TASK_COLUMNS', () => {
+  it('is the ordered open → in_progress → done pipeline (web parity)', () => {
+    expect(TASK_COLUMNS).toEqual(['open', 'in_progress', 'done'])
+  })
+})
+
+describe('assigneeLabel', () => {
+  it('"Assigned to you" when it is mine', () => {
+    expect(assigneeLabel(null, true, true)).toBe('Assigned to you')
+  })
+  it('shows the assignee name, falling back to "Someone"', () => {
+    expect(assigneeLabel([{ full_name: 'Dana' }], false, true)).toBe('Dana')
+    expect(assigneeLabel(null, false, true)).toBe('Someone')
+    expect(assigneeLabel([{ full_name: null }], false, true)).toBe('Someone')
+  })
+  it('null when unassigned', () => {
+    expect(assigneeLabel(null, false, false)).toBeNull()
   })
 })

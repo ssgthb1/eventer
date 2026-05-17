@@ -2,7 +2,7 @@
 // can be unit-tested without React Native. Mirrors the derivations the web
 // event-detail page does inline.
 
-import type { EventStatus, RsvpStatus } from '@eventer/shared'
+import type { EventStatus, RsvpStatus, TaskStatus } from '@eventer/shared'
 
 import { formatCurrency } from './format'
 import type { Accent } from './theme'
@@ -128,4 +128,75 @@ export function allDebtsSettled(
     hasAnySplit &&
     expenses.every((e) => e.expense_splits.every((s) => s.is_settled))
   )
+}
+
+// ─── Task board ───────────────────────────────────────────────
+
+const TASK_STATUS: Record<TaskStatus, { label: string; accent: Accent }> = {
+  open: { label: 'Open', accent: 'neutral' },
+  in_progress: { label: 'In progress', accent: 'warning' },
+  done: { label: 'Done', accent: 'success' },
+}
+
+/** Ordered columns for the board. */
+export const TASK_COLUMNS: TaskStatus[] = ['open', 'in_progress', 'done']
+
+export function taskStatusMeta(status: TaskStatus): { label: string; accent: Accent } {
+  return TASK_STATUS[status] ?? TASK_STATUS.open
+}
+
+const NEXT: Record<TaskStatus, TaskStatus | null> = {
+  open: 'in_progress',
+  in_progress: 'done',
+  done: null,
+}
+const PREV: Record<TaskStatus, TaskStatus | null> = {
+  open: null,
+  in_progress: 'open',
+  done: 'in_progress',
+}
+
+export function nextTaskStatus(status: TaskStatus): TaskStatus | null {
+  return NEXT[status] ?? null
+}
+export function prevTaskStatus(status: TaskStatus): TaskStatus | null {
+  return PREV[status] ?? null
+}
+
+/**
+ * Due-date display. Compares date-only strings at the UTC boundary (same as
+ * the web TaskBoard) to avoid timezone off-by-one. `today` is injectable for
+ * tests; it defaults to the current UTC date (YYYY-MM-DD).
+ */
+export function dueDateView(
+  dueDate: string | null,
+  status: TaskStatus,
+  today: string = new Date().toISOString().slice(0, 10),
+): { label: string; overdue: boolean } | null {
+  if (!dueDate) return null
+  const d = new Date(`${dueDate}T00:00:00Z`)
+  if (Number.isNaN(d.getTime())) return null
+  const overdue = status !== 'done' && dueDate < today
+  const formatted = d.toLocaleDateString('en-US', {
+    timeZone: 'UTC',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
+  return { label: `Due ${formatted}${overdue ? ' · Overdue' : ''}`, overdue }
+}
+
+/**
+ * Assignee line text. Mirrors web TaskBoard: your own → "Assigned to you";
+ * someone else → their name (or "Someone" if the join name is missing);
+ * unassigned → null (caller shows an "Assign to me" affordance instead).
+ */
+export function assigneeLabel(
+  assignee: { full_name: string | null }[] | null,
+  isAssignedToMe: boolean,
+  isAssigned: boolean,
+): string | null {
+  if (isAssignedToMe) return 'Assigned to you'
+  if (isAssigned) return assignee?.[0]?.full_name || 'Someone'
+  return null
 }

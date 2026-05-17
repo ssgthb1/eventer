@@ -262,3 +262,26 @@ Full-stack party/event organizer with expense splitting, task management, RSVP, 
 **Carve-outs (later #45 sub-issues):** add/edit/delete expense (add-flows sub-issue), task board, create/edit event. RN render tests still not set up — coverage on pure helpers.
 
 **Verification:** type-check clean (all 3 workspaces); 30 web + 59 mobile + 8 shared tests pass. No new lint. Test + code-reviewer agents run; 2 HIGH (unmounted setState ordering, RLS-creator comment accuracy) + MEDIUM (memoize allDebtsSettled, param-type undefined, cast documented) addressed pre-merge.
+
+---
+
+### 2026-05-16 — Phase 2.4: Task board (Issue #54, sub-issue of #45)
+
+**Goal:** fourth Phase 2 slice — read tasks, move status, assign-self/unassign. Mirrors web `TaskBoard` (read + status-move + assign-self/unassign; create/edit/delete deferred to the add-flows sub-issue). Completes navigability of all three event-detail stat tiles.
+
+**Data access (`apps/mobile/lib/tasks.ts`):**
+- `getTasksData(eventId)` — parallel event creator / participants / nested tasks select (`creator`/`assignee` profile embeds, array-shaped to mirror web). `.limit(500)`.
+- `setTaskStatus` / `setTaskAssignee` — conditional `.select('id')`; zero rows ⇒ thrown error rather than a silent no-op. **Authorization is the honest RLS truth:** `tasks_update` = `created_by==me OR assigned_to==me OR organizer`. The web `/assign` route claims "any participant can assign" but that is not RLS-backed and silently no-ops on web for plain participants — mobile only surfaces controls that actually work and reports denial. Ambiguous zero-row result messaged neutrally ("may no longer exist or you may not have permission" — reviewer HIGH, deleted-vs-denied can't be distinguished).
+
+**Presenters (`lib/event-presenters.ts`, unit-tested):** `taskStatusMeta`, `TASK_COLUMNS`, `nextTaskStatus`/`prevTaskStatus`, `dueDateView` (UTC-boundary overdue compare, injectable `today`, done-suppresses-overdue), `assigneeLabel`.
+
+**UI:**
+- `components/task-board.tsx` — vertical status sections (Open / In progress / Done) with count badges. Side-by-side kanban is unusable at phone width, so the mobile layout intentionally diverges from web's 3-column grid.
+- `components/task-card.tsx` — title, description, due (overdue red), assignee line, assign-to-me / unassign, status move (←/→). All mutations gated by `canModify` (= RLS truth). `inFlight` ref guards double-submit; on success `onChanged()` is called and local state is deliberately left untouched (card unmounts on parent reload) — guard stays armed until unmount; only the error path re-enables (reviewer MEDIUM).
+- `app/events/[id]/tasks.tsx` — ScrollView + pull-to-refresh + loading/error/empty; mounted-ref guard around post-await setState (reviewer MEDIUM); `isOrganizer` fast-path documented as relying on the creator-is-always-organizer-participant invariant (reviewer HIGH).
+- Event-detail **Tasks** stat tile now navigable — all three tiles (Participants/Expenses/Tasks) navigable.
+- New `lib/use-event-id.ts` hook centralizes the `[id]` param narrowing; applied across all four event/[id] screens (reviewer MEDIUM — removes the copy-paste hazard).
+
+**Carve-outs (later #45 sub-issue):** create/edit/delete task (add-flows), create/edit event. RN render tests still not set up.
+
+**Verification:** type-check clean (all 3 workspaces); 30 web + 73 mobile + 8 shared tests pass (test agent added dueDateView year-boundary / default-arg + TASK_COLUMNS order tests). No new lint. Test + code-reviewer agents run; 2 HIGH + actionable MEDIUM addressed pre-merge.

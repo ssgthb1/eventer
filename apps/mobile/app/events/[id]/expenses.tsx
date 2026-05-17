@@ -1,4 +1,4 @@
-import { Stack, useLocalSearchParams } from 'expo-router'
+import { Stack } from 'expo-router'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { FlatList, RefreshControl, View, Text, StyleSheet } from 'react-native'
 
@@ -9,11 +9,11 @@ import { useAuth } from '@/lib/auth'
 import { getExpensesData, type ExpensesData } from '@/lib/expenses'
 import { formatCurrency } from '@/lib/format'
 import { pluralize } from '@/lib/event-presenters'
+import { useEventId } from '@/lib/use-event-id'
 import { colors, spacing, fontSize } from '@/lib/theme'
 
 export default function ExpensesScreen() {
-  const params = useLocalSearchParams<{ id?: string | string[] }>()
-  const id = Array.isArray(params.id) ? params.id[0] : params.id
+  const id = useEventId()
 
   const { state } = useAuth()
   const currentUserId = state.status === 'signedIn' ? state.session.user.id : null

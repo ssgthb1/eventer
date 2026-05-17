@@ -1,5 +1,5 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons'
-import { Stack, useLocalSearchParams } from 'expo-router'
+import { Stack } from 'expo-router'
 import { useCallback, useEffect, useState } from 'react'
 import { ScrollView, View, Text, StyleSheet } from 'react-native'
 
@@ -7,12 +7,11 @@ import { Badge, Card, StatTile, Screen, LoadingState, ErrorState } from '@/compo
 import { getEventDetail, type EventDetail } from '@/lib/events'
 import { budgetView, statusAccent, taskProgressPct, pluralize } from '@/lib/event-presenters'
 import { formatCurrency, formatDateTime } from '@/lib/format'
+import { useEventId } from '@/lib/use-event-id'
 import { colors, radius, spacing, fontSize } from '@/lib/theme'
 
 export default function EventDetailScreen() {
-  const params = useLocalSearchParams<{ id?: string | string[] }>()
-  // useLocalSearchParams can yield string[] for repeated params — narrow it.
-  const id = Array.isArray(params.id) ? params.id[0] : params.id
+  const id = useEventId()
   const [detail, setDetail] = useState<EventDetail | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -73,8 +72,7 @@ export default function EventDetailScreen() {
           </View>
         )}
 
-        {/* Participants + Expenses are navigable; the Tasks screen lands in a
-            later sub-issue so that tile stays static (no dead-end nav). */}
+        {/* All three section tiles are navigable. */}
         <View style={styles.stats}>
           <StatTile
             icon="group"
@@ -95,6 +93,7 @@ export default function EventDetailScreen() {
             value={`${taskCounts.done}/${taskCounts.total}`}
             label="Tasks done"
             accent="info"
+            href={`/events/${id}/tasks`}
           />
         </View>
 

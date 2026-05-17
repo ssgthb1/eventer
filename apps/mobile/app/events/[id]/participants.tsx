@@ -1,4 +1,4 @@
-import { Stack, useLocalSearchParams } from 'expo-router'
+import { Stack } from 'expo-router'
 import { useCallback, useEffect, useState } from 'react'
 import { FlatList, RefreshControl, View, Text, StyleSheet } from 'react-native'
 
@@ -8,11 +8,11 @@ import { ParticipantRow } from '@/components/participant-row'
 import { Screen, LoadingState, ErrorState, EmptyState } from '@/components/ui'
 import { useAuth } from '@/lib/auth'
 import { listParticipants, type ParticipantRow as Participant } from '@/lib/participants'
+import { useEventId } from '@/lib/use-event-id'
 import { colors, spacing, fontSize } from '@/lib/theme'
 
 export default function ParticipantsScreen() {
-  const params = useLocalSearchParams<{ id: string | string[] }>()
-  const id = Array.isArray(params.id) ? params.id[0] : params.id
+  const id = useEventId()
 
   const { state } = useAuth()
   const currentUserId = state.status === 'signedIn' ? state.session.user.id : null
